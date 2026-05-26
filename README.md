@@ -167,3 +167,29 @@ Developers can read and edit these workflows as normal Markdown. AI assistants e
 * **Version controlled** - Workflows live in the repository alongside code
 
 MDScript bridges human readability with machine executability by keeping structure minimal and relying on LLM language understanding for everything else.
+
+## Install the `/mdscript` skill
+
+The **mdscript** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install it with the [skills CLI](https://github.com/vercel-labs/skills):
+
+```bash
+# List available skills in this repo
+npx skills add gabewillen/mdscript --list
+
+# Install to Cursor (project scope)
+npx skills add gabewillen/mdscript --skill mdscript -a cursor -y
+
+# Install globally
+npx skills add gabewillen/mdscript --skill mdscript -a cursor -g -y
+```
+
+Then invoke it with what you want the new skill to do:
+
+```
+/mdscript deploy a branch to staging with health checks
+/mdscript onboard a new microservice from the service template
+```
+
+<!-- installable skills under skills/ matching npx skills add discovery -->
+
+The skill lives at `skills/mdscript/`. To publish your own installable skills, place them under `skills/<name>/SKILL.md` in a GitHub repo so others can run `npx skills add <owner>/<repo>`.
