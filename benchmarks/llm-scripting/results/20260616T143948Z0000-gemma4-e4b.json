@@ -1,0 +1,1395 @@
+{
+  "artifacts": {
+    "deploy_branch::dspy": {
+      "artifact": "import dspy\n\n        class NextWorkflowAction(dspy.Signature):\n            \"\"\"Choose and justify the next repository workflow action.\"\"\"\n\n            task: str = dspy.InputField()\n            current_state: str = dspy.InputField()\n            variables: dict = dspy.InputField()\n            next_action: str = dspy.OutputField()\n            next_state: str = dspy.OutputField()\n\n        class DeployBranch(dspy.Module):\n            def __init__(self):\n                self.decide = dspy.ChainOfThought(NextWorkflowAction)\n\n            def forward(self, variables: dict):\n                workflow = \"\"\"Goal: Select a branch, run checks, build an artifact, deploy it, and verify health.\n\nSuccess criteria:\n1. Asks for a branch when branch is missing.\n2. Requires confirmation before deploying main.\n3. Runs typecheck and coverage tests before build.\n4. Warns and confirms when coverage is below 80 percent.\n5. Builds a timestamped artifact and deploys it to the requested environment.\n6. Rolls back and notifies the team on deployment failure.\n7. Retries health checks three times, then rolls back if still failing.\n\nWorkflow states:\n- Select Branch (select_branch):\n  - If branch is empty, ask the user for the branch name.\n  - If branch is main, warn that deployment requires approval.\n  - Ask for confirmation before proceeding with main.\n  - Default next state: run_checks.\n- Run Checks (run_checks):\n  - Run npm run typecheck and stop with errors on failure.\n  - Run npm run test -- --coverage.\n  - If coverage is below 80 percent, warn and ask whether to proceed.\n  - Default next state: build_artifact.\n- Build Artifact (build_artifact):\n  - Run npm run build.\n  - If build fails, return to Run Checks.\n  - Set artifact to dist/{branch}-{timestamp}.tar.gz.\n  - Default next state: deploy.\n- Deploy (deploy):\n  - Deploy artifact to environment.\n  - On success, notify Slack and continue to Verify Deployment.\n  - On failure, roll back to the previous version, notify the team, and return to Select Branch.\n  - Default next state: verify_deployment.\n- Verify Deployment (verify_deployment):\n  - Run a health check against deploy_url/health.\n  - Retry failed health checks up to three times.\n  - If health passes, mark the deploy complete.\n  - If health still fails after three retries, roll back and return to Select Branch.\n  - Terminal state.\"\"\"\n                current_state = \"select_branch\"\n                transcript = []\n                while current_state != \"done\":\n                    decision = self.decide(\n                        task=workflow,\n                        current_state=current_state,\n                        variables=variables,\n                    )\n                    transcript.append(decision.next_action)\n                    current_state = decision.next_state\n                return transcript",
+      "candidate": "dspy",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 17,
+        "chars": 2830,
+        "dependency_markers": 7,
+        "nonblank_lines": 59,
+        "state_mentions": 14
+      }
+    },
+    "deploy_branch::ell": {
+      "artifact": "import ell\n\n        @ell.tool()\n        def ask_user(question: str) -> str: ...\n\n        @ell.tool()\n        def run_shell(command: str) -> str: ...\n\n        @ell.tool()\n        def write_file(path: str, body: str) -> str: ...\n\n        @ell.complex(model=\"repo-workflow-model\", tools=[ask_user, run_shell, write_file])\n        def choose_next_action(state: dict) -> list:\n            return [\n                ell.system(\"\"\"Execute this workflow exactly and return the next tool\n        call or state transition. Keep variables explicit.\n\n        Goal: Select a branch, run checks, build an artifact, deploy it, and verify health.\n\nSuccess criteria:\n1. Asks for a branch when branch is missing.\n2. Requires confirmation before deploying main.\n3. Runs typecheck and coverage tests before build.\n4. Warns and confirms when coverage is below 80 percent.\n5. Builds a timestamped artifact and deploys it to the requested environment.\n6. Rolls back and notifies the team on deployment failure.\n7. Retries health checks three times, then rolls back if still failing.\n\nWorkflow states:\n- Select Branch (select_branch):\n  - If branch is empty, ask the user for the branch name.\n  - If branch is main, warn that deployment requires approval.\n  - Ask for confirmation before proceeding with main.\n  - Default next state: run_checks.\n- Run Checks (run_checks):\n  - Run npm run typecheck and stop with errors on failure.\n  - Run npm run test -- --coverage.\n  - If coverage is below 80 percent, warn and ask whether to proceed.\n  - Default next state: build_artifact.\n- Build Artifact (build_artifact):\n  - Run npm run build.\n  - If build fails, return to Run Checks.\n  - Set artifact to dist/{branch}-{timestamp}.tar.gz.\n  - Default next state: deploy.\n- Deploy (deploy):\n  - Deploy artifact to environment.\n  - On success, notify Slack and continue to Verify Deployment.\n  - On failure, roll back to the previous version, notify the team, and return to Select Branch.\n  - Default next state: verify_deployment.\n- Verify Deployment (verify_deployment):\n  - Run a health check against deploy_url/health.\n  - Retry failed health checks up to three times.\n  - If health passes, mark the deploy complete.\n  - If health still fails after three retries, roll back and return to Select Branch.\n  - Terminal state.\n                \"\"\"),\n                ell.user(str(state)),\n            ]\n\n        def run_workflow(inputs: dict):\n            state = {\"state\": \"select_branch\", **inputs}\n            while state[\"state\"] != \"done\":\n                state.update(choose_next_action(state))\n            return state",
+      "candidate": "ell",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 18,
+        "chars": 2589,
+        "dependency_markers": 9,
+        "nonblank_lines": 56,
+        "state_mentions": 16
+      }
+    },
+    "deploy_branch::guidance": {
+      "artifact": "import guidance\n        from guidance import gen, select\n\n        @guidance\n        def workflow(lm, user_input):\n            lm += \"\"\"Execute the repository workflow. Use the exact states and\n        conditions below, maintain variables, and stop only after success.\n\n        Goal: Select a branch, run checks, build an artifact, deploy it, and verify health.\n\nSuccess criteria:\n1. Asks for a branch when branch is missing.\n2. Requires confirmation before deploying main.\n3. Runs typecheck and coverage tests before build.\n4. Warns and confirms when coverage is below 80 percent.\n5. Builds a timestamped artifact and deploys it to the requested environment.\n6. Rolls back and notifies the team on deployment failure.\n7. Retries health checks three times, then rolls back if still failing.\n\nWorkflow states:\n- Select Branch (select_branch):\n  - If branch is empty, ask the user for the branch name.\n  - If branch is main, warn that deployment requires approval.\n  - Ask for confirmation before proceeding with main.\n  - Default next state: run_checks.\n- Run Checks (run_checks):\n  - Run npm run typecheck and stop with errors on failure.\n  - Run npm run test -- --coverage.\n  - If coverage is below 80 percent, warn and ask whether to proceed.\n  - Default next state: build_artifact.\n- Build Artifact (build_artifact):\n  - Run npm run build.\n  - If build fails, return to Run Checks.\n  - Set artifact to dist/{branch}-{timestamp}.tar.gz.\n  - Default next state: deploy.\n- Deploy (deploy):\n  - Deploy artifact to environment.\n  - On success, notify Slack and continue to Verify Deployment.\n  - On failure, roll back to the previous version, notify the team, and return to Select Branch.\n  - Default next state: verify_deployment.\n- Verify Deployment (verify_deployment):\n  - Run a health check against deploy_url/health.\n  - Retry failed health checks up to three times.\n  - If health passes, mark the deploy complete.\n  - If health still fails after three retries, roll back and return to Select Branch.\n  - Terminal state.\n        \"\"\"\n            state = \"select_branch\"\n            while state != \"done\":\n                lm += f\"Current state: {state}\\n\"\n                lm += \"Choose the next concrete action: \" + gen(\"action\", stop=\"\\n\")\n                lm += \"Choose next state: \" + select(\n                    list(['select_branch', 'run_checks', 'build_artifact', 'deploy', 'verify_deployment']) + [\"done\"],\n                    name=\"next_state\",\n                )\n                state = lm[\"next_state\"]\n            return lm",
+      "candidate": "guidance",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 17,
+        "chars": 2534,
+        "dependency_markers": 7,
+        "nonblank_lines": 53,
+        "state_mentions": 15
+      }
+    },
+    "deploy_branch::langgraph": {
+      "artifact": "from typing import Literal, TypedDict\nfrom langgraph.graph import END, StateGraph\n\nclass WorkflowState(TypedDict, total=False):\n    artifact: str\n    branch: str\n    coverage: str\n    deploy_url: str\n    environment: str\n    timestamp: str\n    retries: int\n    proceed: bool\n\ndef ask(prompt: str) -> str: ...\ndef run(command: str) -> str: ...\ndef write_file(path: str, body: str) -> None: ...\ndef notify(target: str, message: str) -> None: ...\n\ndef select_branch(state: WorkflowState) -> WorkflowState:\n    # If branch is empty, ask the user for the branch name.\n    # If branch is main, warn that deployment requires approval.\n    # Ask for confirmation before proceeding with main.\n    state = dict(state)\n    state['last_state'] = 'select_branch'\n    state['next'] = 'run_checks'\n    return state\n\ndef run_checks(state: WorkflowState) -> WorkflowState:\n    # Run npm run typecheck and stop with errors on failure.\n    # Run npm run test -- --coverage.\n    # If coverage is below 80 percent, warn and ask whether to proceed.\n    state = dict(state)\n    state['last_state'] = 'run_checks'\n    state['next'] = 'build_artifact'\n    return state\n\ndef build_artifact(state: WorkflowState) -> WorkflowState:\n    # Run npm run build.\n    # If build fails, return to Run Checks.\n    # Set artifact to dist/{branch}-{timestamp}.tar.gz.\n    state = dict(state)\n    state['last_state'] = 'build_artifact'\n    state['next'] = 'deploy'\n    return state\n\ndef deploy(state: WorkflowState) -> WorkflowState:\n    # Deploy artifact to environment.\n    # On success, notify Slack and continue to Verify Deployment.\n    # On failure, roll back to the previous version, notify the team, and return to Select Branch.\n    state = dict(state)\n    state['last_state'] = 'deploy'\n    state['next'] = 'verify_deployment'\n    return state\n\ndef verify_deployment(state: WorkflowState) -> WorkflowState:\n    # Run a health check against deploy_url/health.\n    # Retry failed health checks up to three times.\n    # If health passes, mark the deploy complete.\n    # If health still fails after three retries, roll back and return to Select Branch.\n    state = dict(state)\n    state['last_state'] = 'verify_deployment'\n    state['next'] = 'END'\n    return state\n\ndef route(state: WorkflowState) -> str:\n    return state.get('next', END)\n\ngraph = StateGraph(WorkflowState)\ngraph.add_node('select_branch', select_branch)\ngraph.add_node('run_checks', run_checks)\ngraph.add_node('build_artifact', build_artifact)\ngraph.add_node('deploy', deploy)\ngraph.add_node('verify_deployment', verify_deployment)\ngraph.set_entry_point('select_branch')\ngraph.add_edge('select_branch', 'run_checks')\ngraph.add_edge('run_checks', 'build_artifact')\ngraph.add_edge('build_artifact', 'deploy')\ngraph.add_edge('deploy', 'verify_deployment')\ngraph.add_edge('verify_deployment', END)\nworkflow = graph.compile()",
+      "candidate": "langgraph",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 20,
+        "chars": 2854,
+        "dependency_markers": 35,
+        "nonblank_lines": 71,
+        "state_mentions": 57
+      }
+    },
+    "deploy_branch::llamaindex_workflows": {
+      "artifact": "from llama_index.core.workflow import Event, StartEvent, StopEvent, Workflow, step\n\nclass WorkflowEvent(Event):\n    state: dict\n\nclass SelectBranchEvent(WorkflowEvent):\n    pass\n\nclass RunChecksEvent(WorkflowEvent):\n    pass\n\nclass BuildArtifactEvent(WorkflowEvent):\n    pass\n\nclass DeployEvent(WorkflowEvent):\n    pass\n\nclass VerifyDeploymentEvent(WorkflowEvent):\n    pass\n\nclass DeployBranchWorkflow(Workflow):\n    @step\n    async def start(self, ev: StartEvent) -> SelectBranchEvent:\n        return SelectBranchEvent(state=dict(ev))\n\n    @step\n    async def select_branch(self, ev: SelectBranchEvent) -> RunChecksEvent:\n        # If branch is empty, ask the user for the branch name.\n        # If branch is main, warn that deployment requires approval.\n        # Ask for confirmation before proceeding with main.\n        state = dict(ev.state)\n        state['last_state'] = 'select_branch'\n        return RunChecksEvent(state=state)\n\n    @step\n    async def run_checks(self, ev: RunChecksEvent) -> BuildArtifactEvent:\n        # Run npm run typecheck and stop with errors on failure.\n        # Run npm run test -- --coverage.\n        # If coverage is below 80 percent, warn and ask whether to proceed.\n        state = dict(ev.state)\n        state['last_state'] = 'run_checks'\n        return BuildArtifactEvent(state=state)\n\n    @step\n    async def build_artifact(self, ev: BuildArtifactEvent) -> DeployEvent:\n        # Run npm run build.\n        # If build fails, return to Run Checks.\n        # Set artifact to dist/{branch}-{timestamp}.tar.gz.\n        state = dict(ev.state)\n        state['last_state'] = 'build_artifact'\n        return DeployEvent(state=state)\n\n    @step\n    async def deploy(self, ev: DeployEvent) -> VerifyDeploymentEvent:\n        # Deploy artifact to environment.\n        # On success, notify Slack and continue to Verify Deployment.\n        # On failure, roll back to the previous version, notify the team, and return to Select Branch.\n        state = dict(ev.state)\n        state['last_state'] = 'deploy'\n        return VerifyDeploymentEvent(state=state)\n\n    @step\n    async def verify_deployment(self, ev: VerifyDeploymentEvent) -> StopEvent:\n        # Run a health check against deploy_url/health.\n        # Retry failed health checks up to three times.\n        # If health passes, mark the deploy complete.\n        # If health still fails after three retries, roll back and return to Select Branch.\n        state = dict(ev.state)\n        state['last_state'] = 'verify_deployment'\n        return StopEvent(result=state)\n",
+      "candidate": "llamaindex_workflows",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 15,
+        "chars": 2550,
+        "dependency_markers": 18,
+        "nonblank_lines": 58,
+        "state_mentions": 71
+      }
+    },
+    "deploy_branch::lmql": {
+      "artifact": "argmax\n            \"\"\"You are executing a repo workflow.\n\n            Goal: Select a branch, run checks, build an artifact, deploy it, and verify health.\n\nSuccess criteria:\n1. Asks for a branch when branch is missing.\n2. Requires confirmation before deploying main.\n3. Runs typecheck and coverage tests before build.\n4. Warns and confirms when coverage is below 80 percent.\n5. Builds a timestamped artifact and deploys it to the requested environment.\n6. Rolls back and notifies the team on deployment failure.\n7. Retries health checks three times, then rolls back if still failing.\n\nWorkflow states:\n- Select Branch (select_branch):\n  - If branch is empty, ask the user for the branch name.\n  - If branch is main, warn that deployment requires approval.\n  - Ask for confirmation before proceeding with main.\n  - Default next state: run_checks.\n- Run Checks (run_checks):\n  - Run npm run typecheck and stop with errors on failure.\n  - Run npm run test -- --coverage.\n  - If coverage is below 80 percent, warn and ask whether to proceed.\n  - Default next state: build_artifact.\n- Build Artifact (build_artifact):\n  - Run npm run build.\n  - If build fails, return to Run Checks.\n  - Set artifact to dist/{branch}-{timestamp}.tar.gz.\n  - Default next state: deploy.\n- Deploy (deploy):\n  - Deploy artifact to environment.\n  - On success, notify Slack and continue to Verify Deployment.\n  - On failure, roll back to the previous version, notify the team, and return to Select Branch.\n  - Default next state: verify_deployment.\n- Verify Deployment (verify_deployment):\n  - Run a health check against deploy_url/health.\n  - Retry failed health checks up to three times.\n  - If health passes, mark the deploy complete.\n  - If health still fails after three retries, roll back and return to Select Branch.\n  - Terminal state.\n\n            Current variables: {{variables}}\n            At each turn, emit ACTION and NEXT_STATE. Use tools for shell and file work.\n            ACTION: [ACTION]\n            NEXT_STATE: [NEXT_STATE]\n            \"\"\"\n        from\n            \"local-or-hosted-llm\"\n        where\n            STOPS_AT(ACTION, \"\\n\") and\n            NEXT_STATE in [\"select_branch\", \"run_checks\", \"build_artifact\", \"deploy\", \"verify_deployment\", \"done\"]",
+      "candidate": "lmql",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 18,
+        "chars": 2248,
+        "dependency_markers": 2,
+        "nonblank_lines": 48,
+        "state_mentions": 10
+      }
+    },
+    "deploy_branch::mdscript": {
+      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Select Branch\n\n* If {{branch}} is empty, ask the user for the {{branch}} name.\n* If {{branch}} is main, warn that deployment requires approval.\n* Ask for confirmation before proceeding with main.\n* continue to [Run Checks](#run-checks)\n\n## Run Checks\n\n* Run npm run typecheck and stop with errors on failure.\n* Run npm run test -- --coverage.\n* If coverage is below 80 percent, warn and ask whether to proceed.\n* continue to [Build Artifact](#build-artifact)\n\n## Build Artifact\n\n* Run npm run build.\n* If build fails, return to Run Checks. [link target: Run Checks]\n* Set {{artifact}} to dist/{{{branch}}}-{{{timestamp}}}.tar.gz.\n* continue to [Deploy](#deploy)\n\n## Deploy\n\n* Deploy {{artifact}} to {{environment}}.\n* On success, notify Slack and continue to Verify Deployment.\n* On failure, roll back to the previous version, notify the team, and return to Select Branch. [link target: Select Branch]\n* continue to [Verify Deployment](#verify-deployment)\n\n## Verify Deployment\n\n* Run a health check against {{deploy_url}}/health.\n* Retry failed health checks up to three times.\n* If health passes, mark the deploy complete.\n* If health still fails after three retries, roll back and return to Select Branch. [link target: Select Branch]",
+      "candidate": "mdscript",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 15,
+        "chars": 1286,
+        "dependency_markers": 0,
+        "nonblank_lines": 26,
+        "state_mentions": 0
+      }
+    },
+    "deploy_branch::microsoft_agent_framework": {
+      "artifact": "from agent_framework import AgentWorkflowBuilder, WorkflowContext, workflow_step\n\nbuilder = AgentWorkflowBuilder(name='deploy_branch')\n\n@workflow_step(name='select_branch')\nasync def select_branch(ctx: WorkflowContext) -> dict:\n    # If branch is empty, ask the user for the branch name.\n    # If branch is main, warn that deployment requires approval.\n    # Ask for confirmation before proceeding with main.\n    await ctx.trace('completed select_branch')\n    return dict(ctx.state)\n\nbuilder.add_step(select_branch)\n@workflow_step(name='run_checks')\nasync def run_checks(ctx: WorkflowContext) -> dict:\n    # Run npm run typecheck and stop with errors on failure.\n    # Run npm run test -- --coverage.\n    # If coverage is below 80 percent, warn and ask whether to proceed.\n    await ctx.trace('completed run_checks')\n    return dict(ctx.state)\n\nbuilder.add_step(run_checks)\n@workflow_step(name='build_artifact')\nasync def build_artifact(ctx: WorkflowContext) -> dict:\n    # Run npm run build.\n    # If build fails, return to Run Checks.\n    # Set artifact to dist/{branch}-{timestamp}.tar.gz.\n    await ctx.trace('completed build_artifact')\n    return dict(ctx.state)\n\nbuilder.add_step(build_artifact)\n@workflow_step(name='deploy')\nasync def deploy(ctx: WorkflowContext) -> dict:\n    # Deploy artifact to environment.\n    # On success, notify Slack and continue to Verify Deployment.\n    # On failure, roll back to the previous version, notify the team, and return to Select Branch.\n    await ctx.trace('completed deploy')\n    return dict(ctx.state)\n\nbuilder.add_step(deploy)\n@workflow_step(name='verify_deployment')\nasync def verify_deployment(ctx: WorkflowContext) -> dict:\n    # Run a health check against deploy_url/health.\n    # Retry failed health checks up to three times.\n    # If health passes, mark the deploy complete.\n    # If health still fails after three retries, roll back and return to Select Branch.\n    await ctx.trace('completed verify_deployment')\n    return dict(ctx.state)\n\nbuilder.add_step(verify_deployment)\nbuilder.set_start('select_branch')\nbuilder.add_transition('select_branch', 'run_checks')\nbuilder.add_transition('run_checks', 'build_artifact')\nbuilder.add_transition('build_artifact', 'deploy')\nbuilder.add_transition('deploy', 'verify_deployment')\nbuilder.add_terminal('verify_deployment')\nworkflow = builder.build()",
+      "candidate": "microsoft_agent_framework",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 19,
+        "chars": 2350,
+        "dependency_markers": 25,
+        "nonblank_lines": 50,
+        "state_mentions": 16
+      }
+    },
+    "deploy_branch::openai_agents": {
+      "artifact": "from agents import Agent, Runner, function_tool\n\n        @function_tool\n        def ask_user(question: str) -> str: ...\n\n        @function_tool\n        def run_shell(command: str) -> str: ...\n\n        @function_tool\n        def write_file(path: str, body: str) -> str: ...\n\n        @function_tool\n        def notify_team(message: str) -> str: ...\n\n        workflow_agent = Agent(\n            name=\"Deploy branch\",\n            instructions=\"\"\"\n        You execute this repository workflow exactly. Keep state variables across\n        steps, ask before destructive or ambiguous actions, and use tools rather\n        than only describing actions.\n\n        Goal: Select a branch, run checks, build an artifact, deploy it, and verify health.\n\nSuccess criteria:\n1. Asks for a branch when branch is missing.\n2. Requires confirmation before deploying main.\n3. Runs typecheck and coverage tests before build.\n4. Warns and confirms when coverage is below 80 percent.\n5. Builds a timestamped artifact and deploys it to the requested environment.\n6. Rolls back and notifies the team on deployment failure.\n7. Retries health checks three times, then rolls back if still failing.\n\nWorkflow states:\n- Select Branch (select_branch):\n  - If branch is empty, ask the user for the branch name.\n  - If branch is main, warn that deployment requires approval.\n  - Ask for confirmation before proceeding with main.\n  - Default next state: run_checks.\n- Run Checks (run_checks):\n  - Run npm run typecheck and stop with errors on failure.\n  - Run npm run test -- --coverage.\n  - If coverage is below 80 percent, warn and ask whether to proceed.\n  - Default next state: build_artifact.\n- Build Artifact (build_artifact):\n  - Run npm run build.\n  - If build fails, return to Run Checks.\n  - Set artifact to dist/{branch}-{timestamp}.tar.gz.\n  - Default next state: deploy.\n- Deploy (deploy):\n  - Deploy artifact to environment.\n  - On success, notify Slack and continue to Verify Deployment.\n  - On failure, roll back to the previous version, notify the team, and return to Select Branch.\n  - Default next state: verify_deployment.\n- Verify Deployment (verify_deployment):\n  - Run a health check against deploy_url/health.\n  - Retry failed health checks up to three times.\n  - If health passes, mark the deploy complete.\n  - If health still fails after three retries, roll back and return to Select Branch.\n  - Terminal state.\n            \"\"\",\n            tools=[ask_user, run_shell, write_file, notify_team],\n        )\n\n        result = Runner.run_sync(workflow_agent, input=\"Select a branch, run checks, build an artifact, deploy it, and verify health.\")",
+      "candidate": "openai_agents",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 17,
+        "chars": 2629,
+        "dependency_markers": 15,
+        "nonblank_lines": 55,
+        "state_mentions": 8
+      }
+    },
+    "deploy_branch::pydantic_ai": {
+      "artifact": "from pydantic import BaseModel\n        from pydantic_ai import Agent, RunContext\n\n        class WorkflowState(BaseModel):\n            values: dict[str, str] = {}\n            completed_states: list[str] = []\n            next_state: str | None = None\n\n        class WorkflowDecision(BaseModel):\n            action: str\n            next_state: str | None\n            reason: str\n\n        agent = Agent(\n            \"repo-workflow-agent\",\n            output_type=WorkflowDecision,\n            instructions=\"\"\"\n        Follow the workflow as typed state. Use tools for repository actions.\n        Preserve variables and branch exactly as specified.\n\n        Goal: Select a branch, run checks, build an artifact, deploy it, and verify health.\n\nSuccess criteria:\n1. Asks for a branch when branch is missing.\n2. Requires confirmation before deploying main.\n3. Runs typecheck and coverage tests before build.\n4. Warns and confirms when coverage is below 80 percent.\n5. Builds a timestamped artifact and deploys it to the requested environment.\n6. Rolls back and notifies the team on deployment failure.\n7. Retries health checks three times, then rolls back if still failing.\n\nWorkflow states:\n- Select Branch (select_branch):\n  - If branch is empty, ask the user for the branch name.\n  - If branch is main, warn that deployment requires approval.\n  - Ask for confirmation before proceeding with main.\n  - Default next state: run_checks.\n- Run Checks (run_checks):\n  - Run npm run typecheck and stop with errors on failure.\n  - Run npm run test -- --coverage.\n  - If coverage is below 80 percent, warn and ask whether to proceed.\n  - Default next state: build_artifact.\n- Build Artifact (build_artifact):\n  - Run npm run build.\n  - If build fails, return to Run Checks.\n  - Set artifact to dist/{branch}-{timestamp}.tar.gz.\n  - Default next state: deploy.\n- Deploy (deploy):\n  - Deploy artifact to environment.\n  - On success, notify Slack and continue to Verify Deployment.\n  - On failure, roll back to the previous version, notify the team, and return to Select Branch.\n  - Default next state: verify_deployment.\n- Verify Deployment (verify_deployment):\n  - Run a health check against deploy_url/health.\n  - Retry failed health checks up to three times.\n  - If health passes, mark the deploy complete.\n  - If health still fails after three retries, roll back and return to Select Branch.\n  - Terminal state.\n            \"\"\",\n        )\n\n        @agent.tool\n        async def ask_user(ctx: RunContext[WorkflowState], question: str) -> str: ...\n\n        @agent.tool\n        async def run_shell(ctx: RunContext[WorkflowState], command: str) -> str: ...\n\n        @agent.tool\n        async def write_file(ctx: RunContext[WorkflowState], path: str, body: str) -> str: ...",
+      "candidate": "pydantic_ai",
+      "case": "deploy_branch",
+      "metrics": {
+        "branch_markers": 17,
+        "chars": 2756,
+        "dependency_markers": 23,
+        "nonblank_lines": 60,
+        "state_mentions": 14
+      }
+    },
+    "onboard_service::dspy": {
+      "artifact": "import dspy\n\n        class NextWorkflowAction(dspy.Signature):\n            \"\"\"Choose and justify the next repository workflow action.\"\"\"\n\n            task: str = dspy.InputField()\n            current_state: str = dspy.InputField()\n            variables: dict = dspy.InputField()\n            next_action: str = dspy.OutputField()\n            next_state: str = dspy.OutputField()\n\n        class OnboardService(dspy.Module):\n            def __init__(self):\n                self.decide = dspy.ChainOfThought(NextWorkflowAction)\n\n            def forward(self, variables: dict):\n                workflow = \"\"\"Goal: Interactively scaffold a new service with language, infrastructure, and deployment choices.\n\nSuccess criteria:\n1. Asks for a service name when missing and enforces kebab-case.\n2. Supports Go, TypeScript, Rust, and custom runtimes.\n3. Captures database, messaging, HTTP framework, and deployment choices.\n4. Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.\n5. Creates README, entrypoint, and conditional database/messaging stubs.\n6. Offers git initialization without doing it silently.\n7. Either starts local development or prints a scaffold summary.\n\nWorkflow states:\n- Name Service (name_service):\n  - If service_name is empty, ask the user for a name.\n  - If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n  - Set service_path to services/{service_name}.\n  - Default next state: choose_language.\n- Choose Language (choose_language):\n  - Ask for language: Go, TypeScript, Rust, or other.\n  - If language is other, ask for a custom runtime.\n  - Set language_config from the chosen language or custom runtime.\n  - Default next state: pick_stack.\n- Pick Stack (pick_stack):\n  - Ask for database: PostgreSQL, SQLite, or none.\n  - Ask for messaging: Kafka, NATS, or none.\n  - Ask whether to use an HTTP framework or a raw server.\n  - Default next state: configure_deployment.\n- Configure Deployment (configure_deployment):\n  - Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n  - If Kubernetes, ask whether a helm chart is needed.\n  - If Lambda, ask for memory_size in MB.\n  - Ask whether the service exposes a health endpoint.\n  - Default next state: scaffold.\n- Scaffold (scaffold):\n  - Create service_path/README.md with a service description.\n  - Create a language-specific entrypoint from language_config.\n  - If Kubernetes, create Dockerfile and deployment manifest.\n  - If Lambda, create serverless.yml with memory_size.\n  - If database is set, add a database connection module.\n  - If messaging is set, add a producer/consumer stub.\n  - Ask whether to initialize git; if yes, run git init.\n  - Default next state: verify.\n- Verify (verify):\n  - Ask whether to run the service locally now.\n  - If yes, start the service in development mode.\n  - If no, print the scaffold summary.\n  - Terminal state.\"\"\"\n                current_state = \"name_service\"\n                transcript = []\n                while current_state != \"done\":\n                    decision = self.decide(\n                        task=workflow,\n                        current_state=current_state,\n                        variables=variables,\n                    )\n                    transcript.append(decision.next_action)\n                    current_state = decision.next_state\n                return transcript",
+      "candidate": "dspy",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 24,
+        "chars": 3369,
+        "dependency_markers": 9,
+        "nonblank_lines": 68,
+        "state_mentions": 15
+      }
+    },
+    "onboard_service::ell": {
+      "artifact": "import ell\n\n        @ell.tool()\n        def ask_user(question: str) -> str: ...\n\n        @ell.tool()\n        def run_shell(command: str) -> str: ...\n\n        @ell.tool()\n        def write_file(path: str, body: str) -> str: ...\n\n        @ell.complex(model=\"repo-workflow-model\", tools=[ask_user, run_shell, write_file])\n        def choose_next_action(state: dict) -> list:\n            return [\n                ell.system(\"\"\"Execute this workflow exactly and return the next tool\n        call or state transition. Keep variables explicit.\n\n        Goal: Interactively scaffold a new service with language, infrastructure, and deployment choices.\n\nSuccess criteria:\n1. Asks for a service name when missing and enforces kebab-case.\n2. Supports Go, TypeScript, Rust, and custom runtimes.\n3. Captures database, messaging, HTTP framework, and deployment choices.\n4. Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.\n5. Creates README, entrypoint, and conditional database/messaging stubs.\n6. Offers git initialization without doing it silently.\n7. Either starts local development or prints a scaffold summary.\n\nWorkflow states:\n- Name Service (name_service):\n  - If service_name is empty, ask the user for a name.\n  - If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n  - Set service_path to services/{service_name}.\n  - Default next state: choose_language.\n- Choose Language (choose_language):\n  - Ask for language: Go, TypeScript, Rust, or other.\n  - If language is other, ask for a custom runtime.\n  - Set language_config from the chosen language or custom runtime.\n  - Default next state: pick_stack.\n- Pick Stack (pick_stack):\n  - Ask for database: PostgreSQL, SQLite, or none.\n  - Ask for messaging: Kafka, NATS, or none.\n  - Ask whether to use an HTTP framework or a raw server.\n  - Default next state: configure_deployment.\n- Configure Deployment (configure_deployment):\n  - Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n  - If Kubernetes, ask whether a helm chart is needed.\n  - If Lambda, ask for memory_size in MB.\n  - Ask whether the service exposes a health endpoint.\n  - Default next state: scaffold.\n- Scaffold (scaffold):\n  - Create service_path/README.md with a service description.\n  - Create a language-specific entrypoint from language_config.\n  - If Kubernetes, create Dockerfile and deployment manifest.\n  - If Lambda, create serverless.yml with memory_size.\n  - If database is set, add a database connection module.\n  - If messaging is set, add a producer/consumer stub.\n  - Ask whether to initialize git; if yes, run git init.\n  - Default next state: verify.\n- Verify (verify):\n  - Ask whether to run the service locally now.\n  - If yes, start the service in development mode.\n  - If no, print the scaffold summary.\n  - Terminal state.\n                \"\"\"),\n                ell.user(str(state)),\n            ]\n\n        def run_workflow(inputs: dict):\n            state = {\"state\": \"name_service\", **inputs}\n            while state[\"state\"] != \"done\":\n                state.update(choose_next_action(state))\n            return state",
+      "candidate": "ell",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 25,
+        "chars": 3126,
+        "dependency_markers": 11,
+        "nonblank_lines": 65,
+        "state_mentions": 17
+      }
+    },
+    "onboard_service::guidance": {
+      "artifact": "import guidance\n        from guidance import gen, select\n\n        @guidance\n        def workflow(lm, user_input):\n            lm += \"\"\"Execute the repository workflow. Use the exact states and\n        conditions below, maintain variables, and stop only after success.\n\n        Goal: Interactively scaffold a new service with language, infrastructure, and deployment choices.\n\nSuccess criteria:\n1. Asks for a service name when missing and enforces kebab-case.\n2. Supports Go, TypeScript, Rust, and custom runtimes.\n3. Captures database, messaging, HTTP framework, and deployment choices.\n4. Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.\n5. Creates README, entrypoint, and conditional database/messaging stubs.\n6. Offers git initialization without doing it silently.\n7. Either starts local development or prints a scaffold summary.\n\nWorkflow states:\n- Name Service (name_service):\n  - If service_name is empty, ask the user for a name.\n  - If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n  - Set service_path to services/{service_name}.\n  - Default next state: choose_language.\n- Choose Language (choose_language):\n  - Ask for language: Go, TypeScript, Rust, or other.\n  - If language is other, ask for a custom runtime.\n  - Set language_config from the chosen language or custom runtime.\n  - Default next state: pick_stack.\n- Pick Stack (pick_stack):\n  - Ask for database: PostgreSQL, SQLite, or none.\n  - Ask for messaging: Kafka, NATS, or none.\n  - Ask whether to use an HTTP framework or a raw server.\n  - Default next state: configure_deployment.\n- Configure Deployment (configure_deployment):\n  - Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n  - If Kubernetes, ask whether a helm chart is needed.\n  - If Lambda, ask for memory_size in MB.\n  - Ask whether the service exposes a health endpoint.\n  - Default next state: scaffold.\n- Scaffold (scaffold):\n  - Create service_path/README.md with a service description.\n  - Create a language-specific entrypoint from language_config.\n  - If Kubernetes, create Dockerfile and deployment manifest.\n  - If Lambda, create serverless.yml with memory_size.\n  - If database is set, add a database connection module.\n  - If messaging is set, add a producer/consumer stub.\n  - Ask whether to initialize git; if yes, run git init.\n  - Default next state: verify.\n- Verify (verify):\n  - Ask whether to run the service locally now.\n  - If yes, start the service in development mode.\n  - If no, print the scaffold summary.\n  - Terminal state.\n        \"\"\"\n            state = \"name_service\"\n            while state != \"done\":\n                lm += f\"Current state: {state}\\n\"\n                lm += \"Choose the next concrete action: \" + gen(\"action\", stop=\"\\n\")\n                lm += \"Choose next state: \" + select(\n                    list(['name_service', 'choose_language', 'pick_stack', 'configure_deployment', 'scaffold', 'verify']) + [\"done\"],\n                    name=\"next_state\",\n                )\n                state = lm[\"next_state\"]\n            return lm",
+      "candidate": "guidance",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 24,
+        "chars": 3086,
+        "dependency_markers": 9,
+        "nonblank_lines": 62,
+        "state_mentions": 16
+      }
+    },
+    "onboard_service::langgraph": {
+      "artifact": "from typing import Literal, TypedDict\nfrom langgraph.graph import END, StateGraph\n\nclass WorkflowState(TypedDict, total=False):\n    database: str\n    language: str\n    language_config: str\n    memory_size: str\n    messaging: str\n    service_name: str\n    service_path: str\n    timestamp: str\n    retries: int\n    proceed: bool\n\ndef ask(prompt: str) -> str: ...\ndef run(command: str) -> str: ...\ndef write_file(path: str, body: str) -> None: ...\ndef notify(target: str, message: str) -> None: ...\n\ndef name_service(state: WorkflowState) -> WorkflowState:\n    # If service_name is empty, ask the user for a name.\n    # If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n    # Set service_path to services/{service_name}.\n    state = dict(state)\n    state['last_state'] = 'name_service'\n    state['next'] = 'choose_language'\n    return state\n\ndef choose_language(state: WorkflowState) -> WorkflowState:\n    # Ask for language: Go, TypeScript, Rust, or other.\n    # If language is other, ask for a custom runtime.\n    # Set language_config from the chosen language or custom runtime.\n    state = dict(state)\n    state['last_state'] = 'choose_language'\n    state['next'] = 'pick_stack'\n    return state\n\ndef pick_stack(state: WorkflowState) -> WorkflowState:\n    # Ask for database: PostgreSQL, SQLite, or none.\n    # Ask for messaging: Kafka, NATS, or none.\n    # Ask whether to use an HTTP framework or a raw server.\n    state = dict(state)\n    state['last_state'] = 'pick_stack'\n    state['next'] = 'configure_deployment'\n    return state\n\ndef configure_deployment(state: WorkflowState) -> WorkflowState:\n    # Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n    # If Kubernetes, ask whether a helm chart is needed.\n    # If Lambda, ask for memory_size in MB.\n    # Ask whether the service exposes a health endpoint.\n    state = dict(state)\n    state['last_state'] = 'configure_deployment'\n    state['next'] = 'scaffold'\n    return state\n\ndef scaffold(state: WorkflowState) -> WorkflowState:\n    # Create service_path/README.md with a service description.\n    # Create a language-specific entrypoint from language_config.\n    # If Kubernetes, create Dockerfile and deployment manifest.\n    # If Lambda, create serverless.yml with memory_size.\n    # If database is set, add a database connection module.\n    # If messaging is set, add a producer/consumer stub.\n    # Ask whether to initialize git; if yes, run git init.\n    state = dict(state)\n    state['last_state'] = 'scaffold'\n    state['next'] = 'verify'\n    return state\n\ndef verify(state: WorkflowState) -> WorkflowState:\n    # Ask whether to run the service locally now.\n    # If yes, start the service in development mode.\n    # If no, print the scaffold summary.\n    state = dict(state)\n    state['last_state'] = 'verify'\n    state['next'] = 'END'\n    return state\n\ndef route(state: WorkflowState) -> str:\n    return state.get('next', END)\n\ngraph = StateGraph(WorkflowState)\ngraph.add_node('name_service', name_service)\ngraph.add_node('choose_language', choose_language)\ngraph.add_node('pick_stack', pick_stack)\ngraph.add_node('configure_deployment', configure_deployment)\ngraph.add_node('scaffold', scaffold)\ngraph.add_node('verify', verify)\ngraph.set_entry_point('name_service')\ngraph.add_edge('name_service', 'choose_language')\ngraph.add_edge('choose_language', 'pick_stack')\ngraph.add_edge('pick_stack', 'configure_deployment')\ngraph.add_edge('configure_deployment', 'scaffold')\ngraph.add_edge('scaffold', 'verify')\ngraph.add_edge('verify', END)\nworkflow = graph.compile()",
+      "candidate": "langgraph",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 30,
+        "chars": 3584,
+        "dependency_markers": 41,
+        "nonblank_lines": 87,
+        "state_mentions": 67
+      }
+    },
+    "onboard_service::llamaindex_workflows": {
+      "artifact": "from llama_index.core.workflow import Event, StartEvent, StopEvent, Workflow, step\n\nclass WorkflowEvent(Event):\n    state: dict\n\nclass NameServiceEvent(WorkflowEvent):\n    pass\n\nclass ChooseLanguageEvent(WorkflowEvent):\n    pass\n\nclass PickStackEvent(WorkflowEvent):\n    pass\n\nclass ConfigureDeploymentEvent(WorkflowEvent):\n    pass\n\nclass ScaffoldEvent(WorkflowEvent):\n    pass\n\nclass VerifyEvent(WorkflowEvent):\n    pass\n\nclass OnboardServiceWorkflow(Workflow):\n    @step\n    async def start(self, ev: StartEvent) -> NameServiceEvent:\n        return NameServiceEvent(state=dict(ev))\n\n    @step\n    async def name_service(self, ev: NameServiceEvent) -> ChooseLanguageEvent:\n        # If service_name is empty, ask the user for a name.\n        # If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n        # Set service_path to services/{service_name}.\n        state = dict(ev.state)\n        state['last_state'] = 'name_service'\n        return ChooseLanguageEvent(state=state)\n\n    @step\n    async def choose_language(self, ev: ChooseLanguageEvent) -> PickStackEvent:\n        # Ask for language: Go, TypeScript, Rust, or other.\n        # If language is other, ask for a custom runtime.\n        # Set language_config from the chosen language or custom runtime.\n        state = dict(ev.state)\n        state['last_state'] = 'choose_language'\n        return PickStackEvent(state=state)\n\n    @step\n    async def pick_stack(self, ev: PickStackEvent) -> ConfigureDeploymentEvent:\n        # Ask for database: PostgreSQL, SQLite, or none.\n        # Ask for messaging: Kafka, NATS, or none.\n        # Ask whether to use an HTTP framework or a raw server.\n        state = dict(ev.state)\n        state['last_state'] = 'pick_stack'\n        return ConfigureDeploymentEvent(state=state)\n\n    @step\n    async def configure_deployment(self, ev: ConfigureDeploymentEvent) -> ScaffoldEvent:\n        # Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n        # If Kubernetes, ask whether a helm chart is needed.\n        # If Lambda, ask for memory_size in MB.\n        # Ask whether the service exposes a health endpoint.\n        state = dict(ev.state)\n        state['last_state'] = 'configure_deployment'\n        return ScaffoldEvent(state=state)\n\n    @step\n    async def scaffold(self, ev: ScaffoldEvent) -> VerifyEvent:\n        # Create service_path/README.md with a service description.\n        # Create a language-specific entrypoint from language_config.\n        # If Kubernetes, create Dockerfile and deployment manifest.\n        # If Lambda, create serverless.yml with memory_size.\n        # If database is set, add a database connection module.\n        # If messaging is set, add a producer/consumer stub.\n        # Ask whether to initialize git; if yes, run git init.\n        state = dict(ev.state)\n        state['last_state'] = 'scaffold'\n        return VerifyEvent(state=state)\n\n    @step\n    async def verify(self, ev: VerifyEvent) -> StopEvent:\n        # Ask whether to run the service locally now.\n        # If yes, start the service in development mode.\n        # If no, print the scaffold summary.\n        state = dict(ev.state)\n        state['last_state'] = 'verify'\n        return StopEvent(result=state)\n",
+      "candidate": "llamaindex_workflows",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 24,
+        "chars": 3252,
+        "dependency_markers": 22,
+        "nonblank_lines": 72,
+        "state_mentions": 83
+      }
+    },
+    "onboard_service::lmql": {
+      "artifact": "argmax\n            \"\"\"You are executing a repo workflow.\n\n            Goal: Interactively scaffold a new service with language, infrastructure, and deployment choices.\n\nSuccess criteria:\n1. Asks for a service name when missing and enforces kebab-case.\n2. Supports Go, TypeScript, Rust, and custom runtimes.\n3. Captures database, messaging, HTTP framework, and deployment choices.\n4. Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.\n5. Creates README, entrypoint, and conditional database/messaging stubs.\n6. Offers git initialization without doing it silently.\n7. Either starts local development or prints a scaffold summary.\n\nWorkflow states:\n- Name Service (name_service):\n  - If service_name is empty, ask the user for a name.\n  - If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n  - Set service_path to services/{service_name}.\n  - Default next state: choose_language.\n- Choose Language (choose_language):\n  - Ask for language: Go, TypeScript, Rust, or other.\n  - If language is other, ask for a custom runtime.\n  - Set language_config from the chosen language or custom runtime.\n  - Default next state: pick_stack.\n- Pick Stack (pick_stack):\n  - Ask for database: PostgreSQL, SQLite, or none.\n  - Ask for messaging: Kafka, NATS, or none.\n  - Ask whether to use an HTTP framework or a raw server.\n  - Default next state: configure_deployment.\n- Configure Deployment (configure_deployment):\n  - Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n  - If Kubernetes, ask whether a helm chart is needed.\n  - If Lambda, ask for memory_size in MB.\n  - Ask whether the service exposes a health endpoint.\n  - Default next state: scaffold.\n- Scaffold (scaffold):\n  - Create service_path/README.md with a service description.\n  - Create a language-specific entrypoint from language_config.\n  - If Kubernetes, create Dockerfile and deployment manifest.\n  - If Lambda, create serverless.yml with memory_size.\n  - If database is set, add a database connection module.\n  - If messaging is set, add a producer/consumer stub.\n  - Ask whether to initialize git; if yes, run git init.\n  - Default next state: verify.\n- Verify (verify):\n  - Ask whether to run the service locally now.\n  - If yes, start the service in development mode.\n  - If no, print the scaffold summary.\n  - Terminal state.\n\n            Current variables: {{variables}}\n            At each turn, emit ACTION and NEXT_STATE. Use tools for shell and file work.\n            ACTION: [ACTION]\n            NEXT_STATE: [NEXT_STATE]\n            \"\"\"\n        from\n            \"local-or-hosted-llm\"\n        where\n            STOPS_AT(ACTION, \"\\n\") and\n            NEXT_STATE in [\"name_service\", \"choose_language\", \"pick_stack\", \"configure_deployment\", \"scaffold\", \"verify\", \"done\"]",
+      "candidate": "lmql",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 25,
+        "chars": 2801,
+        "dependency_markers": 4,
+        "nonblank_lines": 57,
+        "state_mentions": 11
+      }
+    },
+    "onboard_service::mdscript": {
+      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Name Service\n\n* If {{service_name}} is empty, ask the user for a name.\n* If {{service_name}} has spaces or uppercase letters, warn and ask again for kebab-case.\n* Set {{service_path}} to services/{{{service_name}}}.\n* continue to [Choose Language](#choose-language)\n\n## Choose Language\n\n* Ask for {{language}}: Go, TypeScript, Rust, or other.\n* If {{language}} is other, ask for a custom runtime.\n* Set {{language_config}} from the chosen {{language}} or custom runtime.\n* continue to [Pick Stack](#pick-stack)\n\n## Pick Stack\n\n* Ask for {{database}}: PostgreSQL, SQLite, or none.\n* Ask for {{messaging}}: Kafka, NATS, or none.\n* Ask whether to use an HTTP framework or a raw server.\n* continue to [Configure Deployment](#configure-deployment)\n\n## Configure Deployment\n\n* Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n* If Kubernetes, ask whether a helm chart is needed.\n* If Lambda, ask for {{memory_size}} in MB.\n* Ask whether the service exposes a health endpoint.\n* continue to [Scaffold](#scaffold)\n\n## Scaffold\n\n* Create {{service_path}}/README.md with a service description.\n* Create a {{language}}-specific entrypoint from {{language_config}}.\n* If Kubernetes, create Dockerfile and deployment manifest.\n* If Lambda, create serverless.yml with {{memory_size}}.\n* If {{database}} is set, add a {{database}} connection module.\n* If {{messaging}} is set, add a producer/consumer stub.\n* Ask whether to initialize git; if yes, run git init.\n* continue to [Verify](#verify)\n\n## Verify\n\n* Ask whether to run the service locally now.\n* If yes, start the service in development mode.\n* If no, print the scaffold summary.",
+      "candidate": "mdscript",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 24,
+        "chars": 1688,
+        "dependency_markers": 2,
+        "nonblank_lines": 35,
+        "state_mentions": 0
+      }
+    },
+    "onboard_service::microsoft_agent_framework": {
+      "artifact": "from agent_framework import AgentWorkflowBuilder, WorkflowContext, workflow_step\n\nbuilder = AgentWorkflowBuilder(name='onboard_service')\n\n@workflow_step(name='name_service')\nasync def name_service(ctx: WorkflowContext) -> dict:\n    # If service_name is empty, ask the user for a name.\n    # If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n    # Set service_path to services/{service_name}.\n    await ctx.trace('completed name_service')\n    return dict(ctx.state)\n\nbuilder.add_step(name_service)\n@workflow_step(name='choose_language')\nasync def choose_language(ctx: WorkflowContext) -> dict:\n    # Ask for language: Go, TypeScript, Rust, or other.\n    # If language is other, ask for a custom runtime.\n    # Set language_config from the chosen language or custom runtime.\n    await ctx.trace('completed choose_language')\n    return dict(ctx.state)\n\nbuilder.add_step(choose_language)\n@workflow_step(name='pick_stack')\nasync def pick_stack(ctx: WorkflowContext) -> dict:\n    # Ask for database: PostgreSQL, SQLite, or none.\n    # Ask for messaging: Kafka, NATS, or none.\n    # Ask whether to use an HTTP framework or a raw server.\n    await ctx.trace('completed pick_stack')\n    return dict(ctx.state)\n\nbuilder.add_step(pick_stack)\n@workflow_step(name='configure_deployment')\nasync def configure_deployment(ctx: WorkflowContext) -> dict:\n    # Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n    # If Kubernetes, ask whether a helm chart is needed.\n    # If Lambda, ask for memory_size in MB.\n    # Ask whether the service exposes a health endpoint.\n    await ctx.trace('completed configure_deployment')\n    return dict(ctx.state)\n\nbuilder.add_step(configure_deployment)\n@workflow_step(name='scaffold')\nasync def scaffold(ctx: WorkflowContext) -> dict:\n    # Create service_path/README.md with a service description.\n    # Create a language-specific entrypoint from language_config.\n    # If Kubernetes, create Dockerfile and deployment manifest.\n    # If Lambda, create serverless.yml with memory_size.\n    # If database is set, add a database connection module.\n    # If messaging is set, add a producer/consumer stub.\n    # Ask whether to initialize git; if yes, run git init.\n    await ctx.trace('completed scaffold')\n    return dict(ctx.state)\n\nbuilder.add_step(scaffold)\n@workflow_step(name='verify')\nasync def verify(ctx: WorkflowContext) -> dict:\n    # Ask whether to run the service locally now.\n    # If yes, start the service in development mode.\n    # If no, print the scaffold summary.\n    await ctx.trace('completed verify')\n    return dict(ctx.state)\n\nbuilder.add_step(verify)\nbuilder.set_start('name_service')\nbuilder.add_transition('name_service', 'choose_language')\nbuilder.add_transition('choose_language', 'pick_stack')\nbuilder.add_transition('pick_stack', 'configure_deployment')\nbuilder.add_transition('configure_deployment', 'scaffold')\nbuilder.add_transition('scaffold', 'verify')\nbuilder.add_terminal('verify')\nworkflow = builder.build()",
+      "candidate": "microsoft_agent_framework",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 29,
+        "chars": 3013,
+        "dependency_markers": 30,
+        "nonblank_lines": 63,
+        "state_mentions": 19
+      }
+    },
+    "onboard_service::openai_agents": {
+      "artifact": "from agents import Agent, Runner, function_tool\n\n        @function_tool\n        def ask_user(question: str) -> str: ...\n\n        @function_tool\n        def run_shell(command: str) -> str: ...\n\n        @function_tool\n        def write_file(path: str, body: str) -> str: ...\n\n        @function_tool\n        def notify_team(message: str) -> str: ...\n\n        workflow_agent = Agent(\n            name=\"Onboard service scaffold\",\n            instructions=\"\"\"\n        You execute this repository workflow exactly. Keep state variables across\n        steps, ask before destructive or ambiguous actions, and use tools rather\n        than only describing actions.\n\n        Goal: Interactively scaffold a new service with language, infrastructure, and deployment choices.\n\nSuccess criteria:\n1. Asks for a service name when missing and enforces kebab-case.\n2. Supports Go, TypeScript, Rust, and custom runtimes.\n3. Captures database, messaging, HTTP framework, and deployment choices.\n4. Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.\n5. Creates README, entrypoint, and conditional database/messaging stubs.\n6. Offers git initialization without doing it silently.\n7. Either starts local development or prints a scaffold summary.\n\nWorkflow states:\n- Name Service (name_service):\n  - If service_name is empty, ask the user for a name.\n  - If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n  - Set service_path to services/{service_name}.\n  - Default next state: choose_language.\n- Choose Language (choose_language):\n  - Ask for language: Go, TypeScript, Rust, or other.\n  - If language is other, ask for a custom runtime.\n  - Set language_config from the chosen language or custom runtime.\n  - Default next state: pick_stack.\n- Pick Stack (pick_stack):\n  - Ask for database: PostgreSQL, SQLite, or none.\n  - Ask for messaging: Kafka, NATS, or none.\n  - Ask whether to use an HTTP framework or a raw server.\n  - Default next state: configure_deployment.\n- Configure Deployment (configure_deployment):\n  - Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n  - If Kubernetes, ask whether a helm chart is needed.\n  - If Lambda, ask for memory_size in MB.\n  - Ask whether the service exposes a health endpoint.\n  - Default next state: scaffold.\n- Scaffold (scaffold):\n  - Create service_path/README.md with a service description.\n  - Create a language-specific entrypoint from language_config.\n  - If Kubernetes, create Dockerfile and deployment manifest.\n  - If Lambda, create serverless.yml with memory_size.\n  - If database is set, add a database connection module.\n  - If messaging is set, add a producer/consumer stub.\n  - Ask whether to initialize git; if yes, run git init.\n  - Default next state: verify.\n- Verify (verify):\n  - Ask whether to run the service locally now.\n  - If yes, start the service in development mode.\n  - If no, print the scaffold summary.\n  - Terminal state.\n            \"\"\",\n            tools=[ask_user, run_shell, write_file, notify_team],\n        )\n\n        result = Runner.run_sync(workflow_agent, input=\"Interactively scaffold a new service with language, infrastructure, and deployment choices.\")",
+      "candidate": "openai_agents",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 24,
+        "chars": 3192,
+        "dependency_markers": 17,
+        "nonblank_lines": 64,
+        "state_mentions": 9
+      }
+    },
+    "onboard_service::pydantic_ai": {
+      "artifact": "from pydantic import BaseModel\n        from pydantic_ai import Agent, RunContext\n\n        class WorkflowState(BaseModel):\n            values: dict[str, str] = {}\n            completed_states: list[str] = []\n            next_state: str | None = None\n\n        class WorkflowDecision(BaseModel):\n            action: str\n            next_state: str | None\n            reason: str\n\n        agent = Agent(\n            \"repo-workflow-agent\",\n            output_type=WorkflowDecision,\n            instructions=\"\"\"\n        Follow the workflow as typed state. Use tools for repository actions.\n        Preserve variables and branch exactly as specified.\n\n        Goal: Interactively scaffold a new service with language, infrastructure, and deployment choices.\n\nSuccess criteria:\n1. Asks for a service name when missing and enforces kebab-case.\n2. Supports Go, TypeScript, Rust, and custom runtimes.\n3. Captures database, messaging, HTTP framework, and deployment choices.\n4. Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.\n5. Creates README, entrypoint, and conditional database/messaging stubs.\n6. Offers git initialization without doing it silently.\n7. Either starts local development or prints a scaffold summary.\n\nWorkflow states:\n- Name Service (name_service):\n  - If service_name is empty, ask the user for a name.\n  - If service_name has spaces or uppercase letters, warn and ask again for kebab-case.\n  - Set service_path to services/{service_name}.\n  - Default next state: choose_language.\n- Choose Language (choose_language):\n  - Ask for language: Go, TypeScript, Rust, or other.\n  - If language is other, ask for a custom runtime.\n  - Set language_config from the chosen language or custom runtime.\n  - Default next state: pick_stack.\n- Pick Stack (pick_stack):\n  - Ask for database: PostgreSQL, SQLite, or none.\n  - Ask for messaging: Kafka, NATS, or none.\n  - Ask whether to use an HTTP framework or a raw server.\n  - Default next state: configure_deployment.\n- Configure Deployment (configure_deployment):\n  - Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n  - If Kubernetes, ask whether a helm chart is needed.\n  - If Lambda, ask for memory_size in MB.\n  - Ask whether the service exposes a health endpoint.\n  - Default next state: scaffold.\n- Scaffold (scaffold):\n  - Create service_path/README.md with a service description.\n  - Create a language-specific entrypoint from language_config.\n  - If Kubernetes, create Dockerfile and deployment manifest.\n  - If Lambda, create serverless.yml with memory_size.\n  - If database is set, add a database connection module.\n  - If messaging is set, add a producer/consumer stub.\n  - Ask whether to initialize git; if yes, run git init.\n  - Default next state: verify.\n- Verify (verify):\n  - Ask whether to run the service locally now.\n  - If yes, start the service in development mode.\n  - If no, print the scaffold summary.\n  - Terminal state.\n            \"\"\",\n        )\n\n        @agent.tool\n        async def ask_user(ctx: RunContext[WorkflowState], question: str) -> str: ...\n\n        @agent.tool\n        async def run_shell(ctx: RunContext[WorkflowState], command: str) -> str: ...\n\n        @agent.tool\n        async def write_file(ctx: RunContext[WorkflowState], path: str, body: str) -> str: ...",
+      "candidate": "pydantic_ai",
+      "case": "onboard_service",
+      "metrics": {
+        "branch_markers": 24,
+        "chars": 3294,
+        "dependency_markers": 25,
+        "nonblank_lines": 69,
+        "state_mentions": 15
+      }
+    },
+    "release_notes::dspy": {
+      "artifact": "import dspy\n\n        class NextWorkflowAction(dspy.Signature):\n            \"\"\"Choose and justify the next repository workflow action.\"\"\"\n\n            task: str = dspy.InputField()\n            current_state: str = dspy.InputField()\n            variables: dict = dspy.InputField()\n            next_action: str = dspy.OutputField()\n            next_state: str = dspy.OutputField()\n\n        class ReleaseNotes(dspy.Module):\n            def __init__(self):\n                self.decide = dspy.ChainOfThought(NextWorkflowAction)\n\n            def forward(self, variables: dict):\n                workflow = \"\"\"Goal: Collect commits from a git range, categorize them, and write CHANGELOG.md.\n\nSuccess criteria:\n1. Infers git_range from the last tag to HEAD when it is missing.\n2. Collects commits with git log.\n3. Groups feature, fix, and maintenance commits by conventional prefixes.\n4. Writes only nonempty sections to CHANGELOG.md.\n5. Supports regenerating notes without losing the workflow context.\n\nWorkflow states:\n- Gather Changes (gather_changes):\n  - If git_range is empty, infer it from the last tag to HEAD.\n  - Collect commits in git_range using git log.\n  - Store commit subjects for categorization.\n  - Default next state: categorize_commits.\n- Categorize Commits (categorize_commits):\n  - Put commits matching feat: or feature: in features.\n  - Put commits matching fix: or bug: in fixes.\n  - Put every other commit in chores.\n  - Default next state: generate_notes.\n- Generate Notes (generate_notes):\n  - Write a Features section only when features is not empty.\n  - Write a Bug Fixes section only when fixes is not empty.\n  - Write a Maintenance section only when chores is not empty.\n  - Write the final markdown to CHANGELOG.md.\n  - If the user wants to regenerate, return to Gather Changes.\n  - Terminal state.\"\"\"\n                current_state = \"gather_changes\"\n                transcript = []\n                while current_state != \"done\":\n                    decision = self.decide(\n                        task=workflow,\n                        current_state=current_state,\n                        variables=variables,\n                    )\n                    transcript.append(decision.next_action)\n                    current_state = decision.next_state\n                return transcript",
+      "candidate": "dspy",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 5,
+        "chars": 2304,
+        "dependency_markers": 11,
+        "nonblank_lines": 48,
+        "state_mentions": 12
+      }
+    },
+    "release_notes::ell": {
+      "artifact": "import ell\n\n        @ell.tool()\n        def ask_user(question: str) -> str: ...\n\n        @ell.tool()\n        def run_shell(command: str) -> str: ...\n\n        @ell.tool()\n        def write_file(path: str, body: str) -> str: ...\n\n        @ell.complex(model=\"repo-workflow-model\", tools=[ask_user, run_shell, write_file])\n        def choose_next_action(state: dict) -> list:\n            return [\n                ell.system(\"\"\"Execute this workflow exactly and return the next tool\n        call or state transition. Keep variables explicit.\n\n        Goal: Collect commits from a git range, categorize them, and write CHANGELOG.md.\n\nSuccess criteria:\n1. Infers git_range from the last tag to HEAD when it is missing.\n2. Collects commits with git log.\n3. Groups feature, fix, and maintenance commits by conventional prefixes.\n4. Writes only nonempty sections to CHANGELOG.md.\n5. Supports regenerating notes without losing the workflow context.\n\nWorkflow states:\n- Gather Changes (gather_changes):\n  - If git_range is empty, infer it from the last tag to HEAD.\n  - Collect commits in git_range using git log.\n  - Store commit subjects for categorization.\n  - Default next state: categorize_commits.\n- Categorize Commits (categorize_commits):\n  - Put commits matching feat: or feature: in features.\n  - Put commits matching fix: or bug: in fixes.\n  - Put every other commit in chores.\n  - Default next state: generate_notes.\n- Generate Notes (generate_notes):\n  - Write a Features section only when features is not empty.\n  - Write a Bug Fixes section only when fixes is not empty.\n  - Write a Maintenance section only when chores is not empty.\n  - Write the final markdown to CHANGELOG.md.\n  - If the user wants to regenerate, return to Gather Changes.\n  - Terminal state.\n                \"\"\"),\n                ell.user(str(state)),\n            ]\n\n        def run_workflow(inputs: dict):\n            state = {\"state\": \"gather_changes\", **inputs}\n            while state[\"state\"] != \"done\":\n                state.update(choose_next_action(state))\n            return state",
+      "candidate": "ell",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 6,
+        "chars": 2063,
+        "dependency_markers": 13,
+        "nonblank_lines": 45,
+        "state_mentions": 14
+      }
+    },
+    "release_notes::guidance": {
+      "artifact": "import guidance\n        from guidance import gen, select\n\n        @guidance\n        def workflow(lm, user_input):\n            lm += \"\"\"Execute the repository workflow. Use the exact states and\n        conditions below, maintain variables, and stop only after success.\n\n        Goal: Collect commits from a git range, categorize them, and write CHANGELOG.md.\n\nSuccess criteria:\n1. Infers git_range from the last tag to HEAD when it is missing.\n2. Collects commits with git log.\n3. Groups feature, fix, and maintenance commits by conventional prefixes.\n4. Writes only nonempty sections to CHANGELOG.md.\n5. Supports regenerating notes without losing the workflow context.\n\nWorkflow states:\n- Gather Changes (gather_changes):\n  - If git_range is empty, infer it from the last tag to HEAD.\n  - Collect commits in git_range using git log.\n  - Store commit subjects for categorization.\n  - Default next state: categorize_commits.\n- Categorize Commits (categorize_commits):\n  - Put commits matching feat: or feature: in features.\n  - Put commits matching fix: or bug: in fixes.\n  - Put every other commit in chores.\n  - Default next state: generate_notes.\n- Generate Notes (generate_notes):\n  - Write a Features section only when features is not empty.\n  - Write a Bug Fixes section only when fixes is not empty.\n  - Write a Maintenance section only when chores is not empty.\n  - Write the final markdown to CHANGELOG.md.\n  - If the user wants to regenerate, return to Gather Changes.\n  - Terminal state.\n        \"\"\"\n            state = \"gather_changes\"\n            while state != \"done\":\n                lm += f\"Current state: {state}\\n\"\n                lm += \"Choose the next concrete action: \" + gen(\"action\", stop=\"\\n\")\n                lm += \"Choose next state: \" + select(\n                    list(['gather_changes', 'categorize_commits', 'generate_notes']) + [\"done\"],\n                    name=\"next_state\",\n                )\n                state = lm[\"next_state\"]\n            return lm",
+      "candidate": "guidance",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 5,
+        "chars": 1986,
+        "dependency_markers": 11,
+        "nonblank_lines": 42,
+        "state_mentions": 13
+      }
+    },
+    "release_notes::langgraph": {
+      "artifact": "from typing import Literal, TypedDict\nfrom langgraph.graph import END, StateGraph\n\nclass WorkflowState(TypedDict, total=False):\n    chores: str\n    commits: str\n    features: str\n    fixes: str\n    git_range: str\n    timestamp: str\n    retries: int\n    proceed: bool\n\ndef ask(prompt: str) -> str: ...\ndef run(command: str) -> str: ...\ndef write_file(path: str, body: str) -> None: ...\ndef notify(target: str, message: str) -> None: ...\n\ndef gather_changes(state: WorkflowState) -> WorkflowState:\n    # If git_range is empty, infer it from the last tag to HEAD.\n    # Collect commits in git_range using git log.\n    # Store commit subjects for categorization.\n    state = dict(state)\n    state['last_state'] = 'gather_changes'\n    state['next'] = 'categorize_commits'\n    return state\n\ndef categorize_commits(state: WorkflowState) -> WorkflowState:\n    # Put commits matching feat: or feature: in features.\n    # Put commits matching fix: or bug: in fixes.\n    # Put every other commit in chores.\n    state = dict(state)\n    state['last_state'] = 'categorize_commits'\n    state['next'] = 'generate_notes'\n    return state\n\ndef generate_notes(state: WorkflowState) -> WorkflowState:\n    # Write a Features section only when features is not empty.\n    # Write a Bug Fixes section only when fixes is not empty.\n    # Write a Maintenance section only when chores is not empty.\n    # Write the final markdown to CHANGELOG.md.\n    # If the user wants to regenerate, return to Gather Changes.\n    state = dict(state)\n    state['last_state'] = 'generate_notes'\n    state['next'] = 'END'\n    return state\n\ndef route(state: WorkflowState) -> str:\n    return state.get('next', END)\n\ngraph = StateGraph(WorkflowState)\ngraph.add_node('gather_changes', gather_changes)\ngraph.add_node('categorize_commits', categorize_commits)\ngraph.add_node('generate_notes', generate_notes)\ngraph.set_entry_point('gather_changes')\ngraph.add_edge('gather_changes', 'categorize_commits')\ngraph.add_edge('categorize_commits', 'generate_notes')\ngraph.add_edge('generate_notes', END)\nworkflow = graph.compile()",
+      "candidate": "langgraph",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 8,
+        "chars": 2074,
+        "dependency_markers": 28,
+        "nonblank_lines": 52,
+        "state_mentions": 37
+      }
+    },
+    "release_notes::llamaindex_workflows": {
+      "artifact": "from llama_index.core.workflow import Event, StartEvent, StopEvent, Workflow, step\n\nclass WorkflowEvent(Event):\n    state: dict\n\nclass GatherChangesEvent(WorkflowEvent):\n    pass\n\nclass CategorizeCommitsEvent(WorkflowEvent):\n    pass\n\nclass GenerateNotesEvent(WorkflowEvent):\n    pass\n\nclass ReleaseNotesWorkflow(Workflow):\n    @step\n    async def start(self, ev: StartEvent) -> GatherChangesEvent:\n        return GatherChangesEvent(state=dict(ev))\n\n    @step\n    async def gather_changes(self, ev: GatherChangesEvent) -> CategorizeCommitsEvent:\n        # If git_range is empty, infer it from the last tag to HEAD.\n        # Collect commits in git_range using git log.\n        # Store commit subjects for categorization.\n        state = dict(ev.state)\n        state['last_state'] = 'gather_changes'\n        return CategorizeCommitsEvent(state=state)\n\n    @step\n    async def categorize_commits(self, ev: CategorizeCommitsEvent) -> GenerateNotesEvent:\n        # Put commits matching feat: or feature: in features.\n        # Put commits matching fix: or bug: in fixes.\n        # Put every other commit in chores.\n        state = dict(ev.state)\n        state['last_state'] = 'categorize_commits'\n        return GenerateNotesEvent(state=state)\n\n    @step\n    async def generate_notes(self, ev: GenerateNotesEvent) -> StopEvent:\n        # Write a Features section only when features is not empty.\n        # Write a Bug Fixes section only when fixes is not empty.\n        # Write a Maintenance section only when chores is not empty.\n        # Write the final markdown to CHANGELOG.md.\n        # If the user wants to regenerate, return to Gather Changes.\n        state = dict(ev.state)\n        state['last_state'] = 'generate_notes'\n        return StopEvent(result=state)\n",
+      "candidate": "llamaindex_workflows",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 5,
+        "chars": 1765,
+        "dependency_markers": 15,
+        "nonblank_lines": 39,
+        "state_mentions": 47
+      }
+    },
+    "release_notes::lmql": {
+      "artifact": "argmax\n            \"\"\"You are executing a repo workflow.\n\n            Goal: Collect commits from a git range, categorize them, and write CHANGELOG.md.\n\nSuccess criteria:\n1. Infers git_range from the last tag to HEAD when it is missing.\n2. Collects commits with git log.\n3. Groups feature, fix, and maintenance commits by conventional prefixes.\n4. Writes only nonempty sections to CHANGELOG.md.\n5. Supports regenerating notes without losing the workflow context.\n\nWorkflow states:\n- Gather Changes (gather_changes):\n  - If git_range is empty, infer it from the last tag to HEAD.\n  - Collect commits in git_range using git log.\n  - Store commit subjects for categorization.\n  - Default next state: categorize_commits.\n- Categorize Commits (categorize_commits):\n  - Put commits matching feat: or feature: in features.\n  - Put commits matching fix: or bug: in fixes.\n  - Put every other commit in chores.\n  - Default next state: generate_notes.\n- Generate Notes (generate_notes):\n  - Write a Features section only when features is not empty.\n  - Write a Bug Fixes section only when fixes is not empty.\n  - Write a Maintenance section only when chores is not empty.\n  - Write the final markdown to CHANGELOG.md.\n  - If the user wants to regenerate, return to Gather Changes.\n  - Terminal state.\n\n            Current variables: {{variables}}\n            At each turn, emit ACTION and NEXT_STATE. Use tools for shell and file work.\n            ACTION: [ACTION]\n            NEXT_STATE: [NEXT_STATE]\n            \"\"\"\n        from\n            \"local-or-hosted-llm\"\n        where\n            STOPS_AT(ACTION, \"\\n\") and\n            NEXT_STATE in [\"gather_changes\", \"categorize_commits\", \"generate_notes\", \"done\"]",
+      "candidate": "lmql",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 6,
+        "chars": 1699,
+        "dependency_markers": 6,
+        "nonblank_lines": 37,
+        "state_mentions": 8
+      }
+    },
+    "release_notes::mdscript": {
+      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Gather Changes\n\n* If {{git_range}} is empty, infer it from the last tag to HEAD.\n* Collect commits in {{git_range}} using git log.\n* Store commit subjects for categorization.\n* continue to [Categorize Commits](#categorize-commits)\n\n## Categorize Commits\n\n* Put commits matching feat: or feature: in features.\n* Put commits matching fix: or bug: in fixes.\n* Put every other commit in chores.\n* continue to [Generate Notes](#generate-notes)\n\n## Generate Notes\n\n* Write a Features section only when features is not empty.\n* Write a Bug Fixes section only when fixes is not empty.\n* Write a Maintenance section only when chores is not empty.\n* Write the final markdown to CHANGELOG.md.\n* If the user wants to regenerate, return to Gather Changes. [link target: Gather Changes]",
+      "candidate": "mdscript",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 5,
+        "chars": 821,
+        "dependency_markers": 1,
+        "nonblank_lines": 17,
+        "state_mentions": 0
+      }
+    },
+    "release_notes::microsoft_agent_framework": {
+      "artifact": "from agent_framework import AgentWorkflowBuilder, WorkflowContext, workflow_step\n\nbuilder = AgentWorkflowBuilder(name='release_notes')\n\n@workflow_step(name='gather_changes')\nasync def gather_changes(ctx: WorkflowContext) -> dict:\n    # If git_range is empty, infer it from the last tag to HEAD.\n    # Collect commits in git_range using git log.\n    # Store commit subjects for categorization.\n    await ctx.trace('completed gather_changes')\n    return dict(ctx.state)\n\nbuilder.add_step(gather_changes)\n@workflow_step(name='categorize_commits')\nasync def categorize_commits(ctx: WorkflowContext) -> dict:\n    # Put commits matching feat: or feature: in features.\n    # Put commits matching fix: or bug: in fixes.\n    # Put every other commit in chores.\n    await ctx.trace('completed categorize_commits')\n    return dict(ctx.state)\n\nbuilder.add_step(categorize_commits)\n@workflow_step(name='generate_notes')\nasync def generate_notes(ctx: WorkflowContext) -> dict:\n    # Write a Features section only when features is not empty.\n    # Write a Bug Fixes section only when fixes is not empty.\n    # Write a Maintenance section only when chores is not empty.\n    # Write the final markdown to CHANGELOG.md.\n    # If the user wants to regenerate, return to Gather Changes.\n    await ctx.trace('completed generate_notes')\n    return dict(ctx.state)\n\nbuilder.add_step(generate_notes)\nbuilder.set_start('gather_changes')\nbuilder.add_transition('gather_changes', 'categorize_commits')\nbuilder.add_transition('categorize_commits', 'generate_notes')\nbuilder.add_terminal('generate_notes')\nworkflow = builder.build()",
+      "candidate": "microsoft_agent_framework",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 7,
+        "chars": 1603,
+        "dependency_markers": 20,
+        "nonblank_lines": 33,
+        "state_mentions": 10
+      }
+    },
+    "release_notes::openai_agents": {
+      "artifact": "from agents import Agent, Runner, function_tool\n\n        @function_tool\n        def ask_user(question: str) -> str: ...\n\n        @function_tool\n        def run_shell(command: str) -> str: ...\n\n        @function_tool\n        def write_file(path: str, body: str) -> str: ...\n\n        @function_tool\n        def notify_team(message: str) -> str: ...\n\n        workflow_agent = Agent(\n            name=\"Generate release notes\",\n            instructions=\"\"\"\n        You execute this repository workflow exactly. Keep state variables across\n        steps, ask before destructive or ambiguous actions, and use tools rather\n        than only describing actions.\n\n        Goal: Collect commits from a git range, categorize them, and write CHANGELOG.md.\n\nSuccess criteria:\n1. Infers git_range from the last tag to HEAD when it is missing.\n2. Collects commits with git log.\n3. Groups feature, fix, and maintenance commits by conventional prefixes.\n4. Writes only nonempty sections to CHANGELOG.md.\n5. Supports regenerating notes without losing the workflow context.\n\nWorkflow states:\n- Gather Changes (gather_changes):\n  - If git_range is empty, infer it from the last tag to HEAD.\n  - Collect commits in git_range using git log.\n  - Store commit subjects for categorization.\n  - Default next state: categorize_commits.\n- Categorize Commits (categorize_commits):\n  - Put commits matching feat: or feature: in features.\n  - Put commits matching fix: or bug: in fixes.\n  - Put every other commit in chores.\n  - Default next state: generate_notes.\n- Generate Notes (generate_notes):\n  - Write a Features section only when features is not empty.\n  - Write a Bug Fixes section only when fixes is not empty.\n  - Write a Maintenance section only when chores is not empty.\n  - Write the final markdown to CHANGELOG.md.\n  - If the user wants to regenerate, return to Gather Changes.\n  - Terminal state.\n            \"\"\",\n            tools=[ask_user, run_shell, write_file, notify_team],\n        )\n\n        result = Runner.run_sync(workflow_agent, input=\"Collect commits from a git range, categorize them, and write CHANGELOG.md.\")",
+      "candidate": "openai_agents",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 5,
+        "chars": 2108,
+        "dependency_markers": 20,
+        "nonblank_lines": 44,
+        "state_mentions": 6
+      }
+    },
+    "release_notes::pydantic_ai": {
+      "artifact": "from pydantic import BaseModel\n        from pydantic_ai import Agent, RunContext\n\n        class WorkflowState(BaseModel):\n            values: dict[str, str] = {}\n            completed_states: list[str] = []\n            next_state: str | None = None\n\n        class WorkflowDecision(BaseModel):\n            action: str\n            next_state: str | None\n            reason: str\n\n        agent = Agent(\n            \"repo-workflow-agent\",\n            output_type=WorkflowDecision,\n            instructions=\"\"\"\n        Follow the workflow as typed state. Use tools for repository actions.\n        Preserve variables and branch exactly as specified.\n\n        Goal: Collect commits from a git range, categorize them, and write CHANGELOG.md.\n\nSuccess criteria:\n1. Infers git_range from the last tag to HEAD when it is missing.\n2. Collects commits with git log.\n3. Groups feature, fix, and maintenance commits by conventional prefixes.\n4. Writes only nonempty sections to CHANGELOG.md.\n5. Supports regenerating notes without losing the workflow context.\n\nWorkflow states:\n- Gather Changes (gather_changes):\n  - If git_range is empty, infer it from the last tag to HEAD.\n  - Collect commits in git_range using git log.\n  - Store commit subjects for categorization.\n  - Default next state: categorize_commits.\n- Categorize Commits (categorize_commits):\n  - Put commits matching feat: or feature: in features.\n  - Put commits matching fix: or bug: in fixes.\n  - Put every other commit in chores.\n  - Default next state: generate_notes.\n- Generate Notes (generate_notes):\n  - Write a Features section only when features is not empty.\n  - Write a Bug Fixes section only when fixes is not empty.\n  - Write a Maintenance section only when chores is not empty.\n  - Write the final markdown to CHANGELOG.md.\n  - If the user wants to regenerate, return to Gather Changes.\n  - Terminal state.\n            \"\"\",\n        )\n\n        @agent.tool\n        async def ask_user(ctx: RunContext[WorkflowState], question: str) -> str: ...\n\n        @agent.tool\n        async def run_shell(ctx: RunContext[WorkflowState], command: str) -> str: ...\n\n        @agent.tool\n        async def write_file(ctx: RunContext[WorkflowState], path: str, body: str) -> str: ...",
+      "candidate": "pydantic_ai",
+      "case": "release_notes",
+      "metrics": {
+        "branch_markers": 5,
+        "chars": 2229,
+        "dependency_markers": 27,
+        "nonblank_lines": 49,
+        "state_mentions": 12
+      }
+    }
+  },
+  "cases": [
+    {
+      "goal": "Collect commits from a git range, categorize them, and write CHANGELOG.md.",
+      "id": "release_notes",
+      "name": "Generate release notes",
+      "source": "examples/generate-release-notes.md",
+      "success": [
+        "Infers git_range from the last tag to HEAD when it is missing.",
+        "Collects commits with git log.",
+        "Groups feature, fix, and maintenance commits by conventional prefixes.",
+        "Writes only nonempty sections to CHANGELOG.md.",
+        "Supports regenerating notes without losing the workflow context."
+      ]
+    },
+    {
+      "goal": "Select a branch, run checks, build an artifact, deploy it, and verify health.",
+      "id": "deploy_branch",
+      "name": "Deploy branch",
+      "source": "examples/deploy-branch.md",
+      "success": [
+        "Asks for a branch when branch is missing.",
+        "Requires confirmation before deploying main.",
+        "Runs typecheck and coverage tests before build.",
+        "Warns and confirms when coverage is below 80 percent.",
+        "Builds a timestamped artifact and deploys it to the requested environment.",
+        "Rolls back and notifies the team on deployment failure.",
+        "Retries health checks three times, then rolls back if still failing."
+      ]
+    },
+    {
+      "goal": "Interactively scaffold a new service with language, infrastructure, and deployment choices.",
+      "id": "onboard_service",
+      "name": "Onboard service scaffold",
+      "source": "examples/onboard-service.md",
+      "success": [
+        "Asks for a service name when missing and enforces kebab-case.",
+        "Supports Go, TypeScript, Rust, and custom runtimes.",
+        "Captures database, messaging, HTTP framework, and deployment choices.",
+        "Handles Kubernetes, Lambda, and Docker Compose deployment-specific files.",
+        "Creates README, entrypoint, and conditional database/messaging stubs.",
+        "Offers git initialization without doing it silently.",
+        "Either starts local development or prints a scaffold summary."
+      ]
+    }
+  ],
+  "judge": {
+    "backend": "ollama",
+    "model": "gemma4:e4b",
+    "rubric": {
+      "overall_formula": "0.35 performance + 0.25 readability + 0.25 simplicity + 0.15 fidelity",
+      "scale": "1-10, higher is better"
+    },
+    "seed": 17,
+    "temperature": 0
+  },
+  "results": [
+    {
+      "candidate": "dspy",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact successfully models the required complex workflow using an explicit state machine, achieving high fidelity to all success criteria.",
+      "overall": 8.5,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"dspy\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 7,\n  \"simplicity\": 6,\n  \"fidelity\": 10,\n  \"overall\": 8.5,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria (branch selection, confirmation, testing, artifact building, deployment failure handling, health check retries)\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a complex internal loop and decision module for control flow\",\n    \"The use of dspy.ChainOfThought might overcomplicate simple state transitions\"\n  ],\n  \"notes\": \"The artifact successfully models the required complex workflow using an explicit state machine, achieving high fidelity to all success criteria.\"\n}",
+      "readability": 7.0,
+      "simplicity": 6.0,
+      "static_metrics": {
+        "branch_markers": 17,
+        "chars": 2830,
+        "dependency_markers": 7,
+        "nonblank_lines": 59,
+        "state_mentions": 14
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria (branch selection, confirmation, testing, artifact building, deployment failure handling, health check retries)"
+      ],
+      "weaknesses": [
+        "Relies on a complex internal loop and decision module for control flow",
+        "The use of dspy.ChainOfThought might overcomplicate simple state transitions"
+      ],
+      "weighted_overall": 7.9
+    },
+    {
+      "candidate": "ell",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact successfully maps all required success criteria into a detailed and robust state machine workflow.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"ell\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria (branch selection, confirmation, tests, coverage warning, artifact building, deployment failure rollback, health check retries)\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a complex internal framework (`ell.complex`) which might be opaque to non-experts\",\n    \"The state transition logic is embedded in a single large string prompt, making it hard to follow the flow without careful reading.\"\n  ],\n  \"notes\": \"The artifact successfully maps all required success criteria into a detailed and robust state machine workflow.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 18,
+        "chars": 2589,
+        "dependency_markers": 9,
+        "nonblank_lines": 56,
+        "state_mentions": 16
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria (branch selection, confirmation, tests, coverage warning, artifact building, deployment failure rollback, health check retries)"
+      ],
+      "weaknesses": [
+        "Relies on a complex internal framework (`ell.complex`) which might be opaque to non-experts",
+        "The state transition logic is embedded in a single large string prompt, making it hard to follow the flow without careful reading."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "guidance",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact successfully maps all success criteria into a robust and detailed state machine workflow.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"guidance\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly defines all required states and transitions.\",\n    \"Covers complex failure handling (rollback, retries) accurately.\",\n    \"Uses a structured state machine approach.\"\n  ],\n  \"weaknesses\": [\n    \"Relies on an advanced, specialized framework (Guidance).\",\n    \"The loop structure is somewhat abstract for direct execution review.\"\n  ],\n  \"notes\": \"The artifact successfully maps all success criteria into a robust and detailed state machine workflow.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 17,
+        "chars": 2534,
+        "dependency_markers": 7,
+        "nonblank_lines": 53,
+        "state_mentions": 15
+      },
+      "strengths": [
+        "Explicitly defines all required states and transitions.",
+        "Covers complex failure handling (rollback, retries) accurately.",
+        "Uses a structured state machine approach."
+      ],
+      "weaknesses": [
+        "Relies on an advanced, specialized framework (Guidance).",
+        "The loop structure is somewhat abstract for direct execution review."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "langgraph",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact successfully maps all required steps and failure conditions into a logical, stateful workflow.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"langgraph\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly addresses all success criteria (e.g., branch check, main deployment confirmation, coverage warning, rollback/retry logic).\",\n    \"Uses a structured graph approach for clear state transitions and failure handling.\"\n  ],\n  \"weaknesses\": [\n    \"The implementation relies on abstract function definitions rather than concrete tool calls or detailed logic flow.\",\n    \"Some complex error handling (like retries and rollbacks) are described in comments but not fully modeled in the graph structure itself.\"\n  ],\n  \"notes\": \"The artifact successfully maps all required steps and failure conditions into a logical, stateful workflow.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 20,
+        "chars": 2854,
+        "dependency_markers": 35,
+        "nonblank_lines": 71,
+        "state_mentions": 57
+      },
+      "strengths": [
+        "Explicitly addresses all success criteria (e.g., branch check, main deployment confirmation, coverage warning, rollback/retry logic).",
+        "Uses a structured graph approach for clear state transitions and failure handling."
+      ],
+      "weaknesses": [
+        "The implementation relies on abstract function definitions rather than concrete tool calls or detailed logic flow.",
+        "Some complex error handling (like retries and rollbacks) are described in comments but not fully modeled in the graph structure itself."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "llamaindex_workflows",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact provides a highly detailed and structured plan that meets all success criteria, though actual implementation details like retry loops are only commented out.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"llamaindex_workflows\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly addresses all success criteria in the workflow steps.\",\n    \"Clear separation of concerns using distinct event types and methods.\"\n  ],\n  \"weaknesses\": [\n    \"The use of a specific framework (LlamaIndex) might increase initial setup complexity for non-users.\",\n    \"Error handling logic is described but not fully implemented in the provided code structure.\"\n  ],\n  \"notes\": \"The artifact provides a highly detailed and structured plan that meets all success criteria, though actual implementation details like retry loops are only commented out.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 15,
+        "chars": 2550,
+        "dependency_markers": 18,
+        "nonblank_lines": 58,
+        "state_mentions": 71
+      },
+      "strengths": [
+        "Explicitly addresses all success criteria in the workflow steps.",
+        "Clear separation of concerns using distinct event types and methods."
+      ],
+      "weaknesses": [
+        "The use of a specific framework (LlamaIndex) might increase initial setup complexity for non-users.",
+        "Error handling logic is described but not fully implemented in the provided code structure."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "lmql",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"lmql\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria thoroughly\",\n  \"weaknesses]: [\",\n  \"The use of a specialized query language (LMQL) adds complexity for general maintainers.\",\n  \"notes\\\": \\\"This artifact provides an excellent, highly detailed workflow definition that meets all specified requirements.\\\" \"\n  ]\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 18,
+        "chars": 2248,
+        "dependency_markers": 2,
+        "nonblank_lines": 48,
+        "state_mentions": 10
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria thoroughly",
+        "weaknesses]: ["
+      ],
+      "weaknesses": [],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "mdscript",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact is highly effective, providing a clear, comprehensive, and robust workflow that meets all specified requirements.",
+      "overall": 10.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"mdscript\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 9,\n  \"fidelity\": 10,\n  \"overall\": 10,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Clear failure handling and rollback logic\",\n    \"Directly addresses all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"None observed\"\n  ],\n  \"notes\": \"The artifact is highly effective, providing a clear, comprehensive, and robust workflow that meets all specified requirements.\"\n}",
+      "readability": 10.0,
+      "simplicity": 9.0,
+      "static_metrics": {
+        "branch_markers": 15,
+        "chars": 1286,
+        "dependency_markers": 0,
+        "nonblank_lines": 26,
+        "state_mentions": 0
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Clear failure handling and rollback logic",
+        "Directly addresses all success criteria"
+      ],
+      "weaknesses": [
+        "None observed"
+      ],
+      "weighted_overall": 9.4
+    },
+    {
+      "candidate": "microsoft_agent_framework",
+      "case": "deploy_branch",
+      "fidelity": 8.0,
+      "notes": "The artifact covers most criteria but misses specific confirmations and detailed error handling requirements.",
+      "overall": 8.0,
+      "performance": 8.0,
+      "raw_response": "{\n  \"candidate\": \"microsoft_agent_framework\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 7,\n  \"fidelity\": 8,\n  \"overall\": 8,\n  \"strengths\": [\n    \"Clear step-by-step workflow structure\",\n    \"Explicit handling of failure and rollback logic (deploy/verify)\"\n  ],\n  \"weaknesses\": [\n    \"Missing explicit confirmation for main branch deployment\",\n    \"Does not fully implement the required retry loop in verification\"\n  ],\n  \"notes\": \"The artifact covers most criteria but misses specific confirmations and detailed error handling requirements.\"\n}",
+      "readability": 9.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 19,
+        "chars": 2350,
+        "dependency_markers": 25,
+        "nonblank_lines": 50,
+        "state_mentions": 16
+      },
+      "strengths": [
+        "Clear step-by-step workflow structure",
+        "Explicit handling of failure and rollback logic (deploy/verify)"
+      ],
+      "weaknesses": [
+        "Missing explicit confirmation for main branch deployment",
+        "Does not fully implement the required retry loop in verification"
+      ],
+      "weighted_overall": 8.0
+    },
+    {
+      "candidate": "openai_agents",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact provides a highly detailed and robust workflow definition that meets all specified requirements.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"openai_agents\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Comprehensive failure handling (rollback/retry)\",\n    \"Directly addresses all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of the 'agents' framework\",\n    \"State transitions are defined in natural language, which could be brittle\"\n  ],\n  \"notes\": \"The artifact provides a highly detailed and robust workflow definition that meets all specified requirements.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 17,
+        "chars": 2629,
+        "dependency_markers": 15,
+        "nonblank_lines": 55,
+        "state_mentions": 8
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Comprehensive failure handling (rollback/retry)",
+        "Directly addresses all success criteria"
+      ],
+      "weaknesses": [
+        "Requires understanding of the 'agents' framework",
+        "State transitions are defined in natural language, which could be brittle"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "pydantic_ai",
+      "case": "deploy_branch",
+      "fidelity": 10.0,
+      "notes": "The artifact provides a highly detailed and robust state machine that successfully covers every required success criterion.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"pydantic_ai\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Comprehensive failure handling (rollback/retry)\",\n    \"Directly addresses all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of Pydantic AI framework\",\n    \"Tool definitions are minimal (missing notification tool)\"\n  ],\n  \"notes\": \"The artifact provides a highly detailed and robust state machine that successfully covers every required success criterion.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 17,
+        "chars": 2756,
+        "dependency_markers": 23,
+        "nonblank_lines": 60,
+        "state_mentions": 14
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Comprehensive failure handling (rollback/retry)",
+        "Directly addresses all success criteria"
+      ],
+      "weaknesses": [
+        "Requires understanding of Pydantic AI framework",
+        "Tool definitions are minimal (missing notification tool)"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "dspy",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "The artifact provides an excellent, highly detailed blueprint for the required workflow using a structured state machine approach.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"dspy\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 6,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria in detail\",\n    \"Uses a structured framework (DSPy)\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of DSPy/LM programming frameworks\",\n    \"The actual execution logic is abstracted away into LLM calls\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly detailed blueprint for the required workflow using a structured state machine approach.\"\n}",
+      "readability": 8.0,
+      "simplicity": 6.0,
+      "static_metrics": {
+        "branch_markers": 24,
+        "chars": 3369,
+        "dependency_markers": 9,
+        "nonblank_lines": 68,
+        "state_mentions": 15
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria in detail",
+        "Uses a structured framework (DSPy)"
+      ],
+      "weaknesses": [
+        "Requires understanding of DSPy/LM programming frameworks",
+        "The actual execution logic is abstracted away into LLM calls"
+      ],
+      "weighted_overall": 8.15
+    },
+    {
+      "candidate": "ell",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "This artifact provides an excellent, highly detailed blueprint that covers all requirements using a robust state machine pattern.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"ell\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria in detail\",\n    \"Clear progression through setup steps\"\n  ],\n  \"weaknesses\": [\n    \"Relies heavily on a complex internal framework (ell)\",\n    \"The logic for enforcing kebab-case is described but not implemented in the provided code snippet.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly detailed blueprint that covers all requirements using a robust state machine pattern.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 25,
+        "chars": 3126,
+        "dependency_markers": 11,
+        "nonblank_lines": 65,
+        "state_mentions": 17
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria in detail",
+        "Clear progression through setup steps"
+      ],
+      "weaknesses": [
+        "Relies heavily on a complex internal framework (ell)",
+        "The logic for enforcing kebab-case is described but not implemented in the provided code snippet."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "guidance",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "The artifact provides an excellent, highly structured plan that maps directly to all success criteria.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"guidance\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n  \"Covers all success criteria in detailed states\",\n  \"Clear flow control and branching logic defined\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a specific 'guidance' framework syntax\",\n    \"The loop structure is overly complex for simple sequential prompting\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly structured plan that maps directly to all success criteria.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 24,
+        "chars": 3086,
+        "dependency_markers": 9,
+        "nonblank_lines": 62,
+        "state_mentions": 16
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria in detailed states",
+        "Clear flow control and branching logic defined"
+      ],
+      "weaknesses": [
+        "Relies on a specific 'guidance' framework syntax",
+        "The loop structure is overly complex for simple sequential prompting"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "langgraph",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "This artifact provides a highly structured and comprehensive blueprint for the required interactive scaffolding process.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"langgraph\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Structured workflow using LangGraph for clear state management.\",\n    \"Covers all success criteria through dedicated nodes and sequential flow.\",\n    \"Explicitly defines the entire interaction sequence.\"\n  ],\n  \"weaknesses\": [\n    \"The node functions are stubs, requiring significant implementation detail to function fully.\",\n    \"Relies on external tool definitions (ask, run, write_file) not shown in context.\"\n  ],\n  \"notes\": \"This artifact provides a highly structured and comprehensive blueprint for the required interactive scaffolding process.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 30,
+        "chars": 3584,
+        "dependency_markers": 41,
+        "nonblank_lines": 87,
+        "state_mentions": 67
+      },
+      "strengths": [
+        "Structured workflow using LangGraph for clear state management.",
+        "Covers all success criteria through dedicated nodes and sequential flow.",
+        "Explicitly defines the entire interaction sequence."
+      ],
+      "weaknesses": [
+        "The node functions are stubs, requiring significant implementation detail to function fully.",
+        "Relies on external tool definitions (ask, run, write_file) not shown in context."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "llamaindex_workflows",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "This workflow provides a highly detailed, step-by-step plan that maps perfectly to the task requirements.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"llamaindex_workflows\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly covers all success criteria in a structured workflow.\",\n    \"Uses distinct steps for clear state management and user interaction.\"\n  ],\n  \"weaknesses\": [\n    \"Relies on an external framework (LlamaIndex) which adds complexity.\",\n    \"The actual implementation details of tool use are abstracted away by comments.\"\n  ],\n  \"notes\": \"This workflow provides a highly detailed, step-by-step plan that maps perfectly to the task requirements.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 24,
+        "chars": 3252,
+        "dependency_markers": 22,
+        "nonblank_lines": 72,
+        "state_mentions": 83
+      },
+      "strengths": [
+        "Explicitly covers all success criteria in a structured workflow.",
+        "Uses distinct steps for clear state management and user interaction."
+      ],
+      "weaknesses": [
+        "Relies on an external framework (LlamaIndex) which adds complexity.",
+        "The actual implementation details of tool use are abstracted away by comments."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "lmql",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "This artifact provides an excellent, highly structured workflow that systematically addresses all required steps and success criteria.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"lmql\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria systematically\",\n    \"Clear flow control and variable management\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a specific LLM query language syntax (LMQL)\",\n    \"The 'scaffold' step is very dense, potentially leading to complex tool calls.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured workflow that systematically addresses all required steps and success criteria.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 25,
+        "chars": 2801,
+        "dependency_markers": 4,
+        "nonblank_lines": 57,
+        "state_mentions": 11
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria systematically",
+        "Clear flow control and variable management"
+      ],
+      "weaknesses": [
+        "Relies on a specific LLM query language syntax (LMQL)",
+        "The 'scaffold' step is very dense, potentially leading to complex tool calls."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "mdscript",
+      "case": "onboard_service",
+      "fidelity": 9.0,
+      "notes": "The artifact provides a highly readable, comprehensive plan that covers most success criteria but lacks strict enforcement and some minor detail.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"mdscript\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 10,\n  \"fidelity\": 9,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step flow matching the task structure\",\n    \"Explicitly handles required inputs and conditional file generation\"\n  ],\n  \"weaknesses\": [\n    \"Does not explicitly enforce kebab-case validation (only warns)\",\n    \"Missing explicit handling for custom runtimes in language selection\"\n  ],\n  \"notes\": \"The artifact provides a highly readable, comprehensive plan that covers most success criteria but lacks strict enforcement and some minor detail.\"\n}",
+      "readability": 10.0,
+      "simplicity": 10.0,
+      "static_metrics": {
+        "branch_markers": 24,
+        "chars": 1688,
+        "dependency_markers": 2,
+        "nonblank_lines": 35,
+        "state_mentions": 0
+      },
+      "strengths": [
+        "Clear step-by-step flow matching the task structure",
+        "Explicitly handles required inputs and conditional file generation"
+      ],
+      "weaknesses": [
+        "Does not explicitly enforce kebab-case validation (only warns)",
+        "Missing explicit handling for custom runtimes in language selection"
+      ],
+      "weighted_overall": 9.5
+    },
+    {
+      "candidate": "microsoft_agent_framework",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "The artifact provides an excellent, highly structured blueprint that meets all success criteria with high fidelity.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"microsoft_agent_framework\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 8,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Covers all required steps in a logical, sequential workflow.\",\n    \"Explicitly handles service naming (kebab-case), language choice, stack components, and deployment targets.\",\n    \"The scaffold step is comprehensive, covering README, entrypoints, stubs, and infrastructure files.\"\n  ],\n  \"weaknesses\": [\n    \"Requires knowledge of a specific agent framework syntax (`@workflow_step`, `AgentWorkflowBuilder`).\",\n    \"Does not explicitly show error handling or complex branching logic (e.g., if K8s is chosen, *then* ask for Helm).\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly structured blueprint that meets all success criteria with high fidelity.\"\n}",
+      "readability": 10.0,
+      "simplicity": 8.0,
+      "static_metrics": {
+        "branch_markers": 29,
+        "chars": 3013,
+        "dependency_markers": 30,
+        "nonblank_lines": 63,
+        "state_mentions": 19
+      },
+      "strengths": [
+        "Covers all required steps in a logical, sequential workflow.",
+        "Explicitly handles service naming (kebab-case), language choice, stack components, and deployment targets.",
+        "The scaffold step is comprehensive, covering README, entrypoints, stubs, and infrastructure files."
+      ],
+      "weaknesses": [
+        "Requires knowledge of a specific agent framework syntax (`@workflow_step`, `AgentWorkflowBuilder`).",
+        "Does not explicitly show error handling or complex branching logic (e.g., if K8s is chosen, *then* ask for Helm)."
+      ],
+      "weighted_overall": 9.15
+    },
+    {
+      "candidate": "openai_agents",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "This artifact provides an excellent, comprehensive blueprint using state management to meet all task requirements.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"openai_agents\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Highly structured state machine approach\",\n  \"Explicitly addresses all success criteria in the instructions\",\n  \"Uses defined tools for clear execution paths\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of a specific agent framework (agents library)\",\n    \"The workflow logic is complex and dense within the instruction string\"\n  ],\n  \"notes\": \"This artifact provides an excellent, comprehensive blueprint using state management to meet all task requirements.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 24,
+        "chars": 3192,
+        "dependency_markers": 17,
+        "nonblank_lines": 64,
+        "state_mentions": 9
+      },
+      "strengths": [
+        "Highly structured state machine approach",
+        "Explicitly addresses all success criteria in the instructions",
+        "Uses defined tools for clear execution paths"
+      ],
+      "weaknesses": [
+        "Requires understanding of a specific agent framework (agents library)",
+        "The workflow logic is complex and dense within the instruction string"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "pydantic_ai",
+      "case": "onboard_service",
+      "fidelity": 10.0,
+      "notes": "This artifact provides an excellent, highly structured blueprint that directly addresses all success criteria with clear state transitions and tool usage.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"pydantic_ai\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure is highly effective for complex workflows.\",\n    \"Covers all success criteria with dedicated states and logic.\",\n    \"Clear separation of concerns (e.g., language choice vs. deployment config).\"\n  ],\n  \"weaknesses\": [\n    \"The use of a specific framework (pydantic_ai) adds boilerplate knowledge.\",\n    \"Error handling for user input validation could be more robust.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured blueprint that directly addresses all success criteria with clear state transitions and tool usage.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 24,
+        "chars": 3294,
+        "dependency_markers": 25,
+        "nonblank_lines": 69,
+        "state_mentions": 15
+      },
+      "strengths": [
+        "Explicit state machine structure is highly effective for complex workflows.",
+        "Covers all success criteria with dedicated states and logic.",
+        "Clear separation of concerns (e.g., language choice vs. deployment config)."
+      ],
+      "weaknesses": [
+        "The use of a specific framework (pydantic_ai) adds boilerplate knowledge.",
+        "Error handling for user input validation could be more robust."
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "dspy",
+      "case": "release_notes",
+      "fidelity": 9.0,
+      "notes": "The artifact successfully structures the required multi-step process but relies heavily on LLM reasoning for state transitions and lacks concrete tool calls.",
+      "overall": 7.0,
+      "performance": 8.0,
+      "raw_response": "{\n  \"candidate\": \"dspy\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 7,\n  \"simplicity\": 6,\n  \"fidelity\": 9,\n  \"overall\": 7,\n  \"strengths\": [\n    \"Explicitly models the multi-step workflow using states.\",\n    \"Handles regeneration context by looping back to 'Gather Changes'.\",\n    \"Uses a structured framework (dspy) for state management.\"\n  ],\n  \"weaknesses\": [\n    \"The core logic relies on an LLM's ability to correctly transition between defined states, which is brittle.\",\n    \"The `workflow` string contains all instructions and context, making it overly complex for a single prompt input.\",\n    \"It does not explicitly show the execution of shell commands (e.g., `git log`) or file writing.\"\n  ],\n  \"notes\": \"The artifact successfully structures the required multi-step process but relies heavily on LLM reasoning for state transitions and lacks concrete tool calls.\"\n}",
+      "readability": 7.0,
+      "simplicity": 6.0,
+      "static_metrics": {
+        "branch_markers": 5,
+        "chars": 2304,
+        "dependency_markers": 11,
+        "nonblank_lines": 48,
+        "state_mentions": 12
+      },
+      "strengths": [
+        "Explicitly models the multi-step workflow using states.",
+        "Handles regeneration context by looping back to 'Gather Changes'.",
+        "Uses a structured framework (dspy) for state management."
+      ],
+      "weaknesses": [
+        "The core logic relies on an LLM's ability to correctly transition between defined states, which is brittle.",
+        "The `workflow` string contains all instructions and context, making it overly complex for a single prompt input.",
+        "It does not explicitly show the execution of shell commands (e.g., `git log`) or file writing."
+      ],
+      "weighted_overall": 7.4
+    },
+    {
+      "candidate": "ell",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "The artifact provides a highly structured state machine that explicitly addresses all success criteria, leading to high fidelity and performance.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"ell\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n  \"Covers all success criteria explicitly\",\n  \"Clear separation of concerns (gather, categorize, write)\"\n  ],\n  \"weaknesses\": [\n    \"Relies heavily on the specific 'ell' framework syntax\",\n    \"The logic for writing notes is complex and embedded in a single system prompt\"\n  ],\n  \"notes\": \"The artifact provides a highly structured state machine that explicitly addresses all success criteria, leading to high fidelity and performance.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 6,
+        "chars": 2063,
+        "dependency_markers": 13,
+        "nonblank_lines": 45,
+        "state_mentions": 14
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Covers all success criteria explicitly",
+        "Clear separation of concerns (gather, categorize, write)"
+      ],
+      "weaknesses": [
+        "Relies heavily on the specific 'ell' framework syntax",
+        "The logic for writing notes is complex and embedded in a single system prompt"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "guidance",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "This artifact provides an excellent, highly structured workflow that explicitly addresses all success criteria using a state machine pattern.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"guidance\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Clear separation of concerns (gather, categorize, generate)\",\n    \"High fidelity to all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a specific 'guidance' framework knowledge\",\n    \"The loop structure might be overly complex for simple sequential steps\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured workflow that explicitly addresses all success criteria using a state machine pattern.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 5,
+        "chars": 1986,
+        "dependency_markers": 11,
+        "nonblank_lines": 42,
+        "state_mentions": 13
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Clear separation of concerns (gather, categorize, generate)",
+        "High fidelity to all success criteria"
+      ],
+      "weaknesses": [
+        "Relies on a specific 'guidance' framework knowledge",
+        "The loop structure might be overly complex for simple sequential steps"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "langgraph",
+      "case": "release_notes",
+      "fidelity": 9.0,
+      "notes": "The workflow design is highly structured and addresses most criteria, though the actual execution logic within nodes needs to be robustly defined for perfect performance.",
+      "overall": 8.0,
+      "performance": 8.0,
+      "raw_response": "{\n  \"candidate\": \"langgraph\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 6,\n  \"fidelity\": 9,\n  \"overall\": 8,\n  \"strengths\": [\n    \"Clear separation of concerns into distinct nodes (gather, categorize, generate)\",\n    \"Explicit state management handles data flow well\",\n    \"Structure naturally supports regeneration/re-running steps\"\n  ],\n  \"weaknesses\": [\n    \"The implementation details for tool use (git log, file writing) are abstracted away and not shown.\",\n    \"Regeneration logic is described in comments but not fully implemented in the graph structure.\"\n  ],\n  \"notes\": \"The workflow design is highly structured and addresses most criteria, though the actual execution logic within nodes needs to be robustly defined for perfect performance.\"\n}",
+      "readability": 9.0,
+      "simplicity": 6.0,
+      "static_metrics": {
+        "branch_markers": 8,
+        "chars": 2074,
+        "dependency_markers": 28,
+        "nonblank_lines": 52,
+        "state_mentions": 37
+      },
+      "strengths": [
+        "Clear separation of concerns into distinct nodes (gather, categorize, generate)",
+        "Explicit state management handles data flow well",
+        "Structure naturally supports regeneration/re-running steps"
+      ],
+      "weaknesses": [
+        "The implementation details for tool use (git log, file writing) are abstracted away and not shown.",
+        "Regeneration logic is described in comments but not fully implemented in the graph structure."
+      ],
+      "weighted_overall": 7.9
+    },
+    {
+      "candidate": "llamaindex_workflows",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "The workflow structure perfectly maps the required steps, achieving high fidelity despite lacking concrete execution code.",
+      "overall": 9.0,
+      "performance": 8.0,
+      "raw_response": "{\n  \"candidate\": \"llamaindex_workflows\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step process matching the task flow\",\n  \"Explicit state management for context preservation\",\n  \"High fidelity to all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"The artifact is a skeleton and lacks implementation details (e.g., actual git log calls, parsing logic)\",\n    \"State passing relies on manual dictionary copying which could be brittle in a real system\"\n  ],\n  \"notes\": \"The workflow structure perfectly maps the required steps, achieving high fidelity despite lacking concrete execution code.\"\n}",
+      "readability": 9.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 5,
+        "chars": 1765,
+        "dependency_markers": 15,
+        "nonblank_lines": 39,
+        "state_mentions": 47
+      },
+      "strengths": [
+        "Clear step-by-step process matching the task flow",
+        "Explicit state management for context preservation",
+        "High fidelity to all success criteria"
+      ],
+      "weaknesses": [
+        "The artifact is a skeleton and lacks implementation details (e.g., actual git log calls, parsing logic)",
+        "State passing relies on manual dictionary copying which could be brittle in a real system"
+      ],
+      "weighted_overall": 8.3
+    },
+    {
+      "candidate": "lmql",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "The artifact is highly structured and covers all requirements, making it very effective despite its domain-specific language.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"lmql\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Directly addresses all success criteria\",\n    \"Clear flow control for regeneration\"\n  ],\n  \"weaknesses\": [\n    \"Relies on specialized LMQL syntax (high barrier to entry)\",\n    \"Assumes perfect execution of shell commands within states\"\n  ],\n  \"notes\": \"The artifact is highly structured and covers all requirements, making it very effective despite its domain-specific language.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 6,
+        "chars": 1699,
+        "dependency_markers": 6,
+        "nonblank_lines": 37,
+        "state_mentions": 8
+      },
+      "strengths": [
+        "Explicit state machine structure",
+        "Directly addresses all success criteria",
+        "Clear flow control for regeneration"
+      ],
+      "weaknesses": [
+        "Relies on specialized LMQL syntax (high barrier to entry)",
+        "Assumes perfect execution of shell commands within states"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "mdscript",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "The artifact is highly effective, providing a clear and comprehensive state machine that meets all success criteria with minimal complexity.",
+      "overall": 9.0,
+      "performance": 8.0,
+      "raw_response": "{\n  \"candidate\": \"mdscript\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 9,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step process flow\",\n    \"Explicitly handles all success criteria\",\n    \"Simple markdown structure for a state machine\"\n  ],\n  \"weaknesses\": [\n    \"Assumes perfect execution of internal variables (e.g., `features`, `fixes`)\",\n    \"Lacks explicit error handling or tool-use instructions beyond the initial git log call\"\n  ],\n  \"notes\": \"The artifact is highly effective, providing a clear and comprehensive state machine that meets all success criteria with minimal complexity.\"\n}",
+      "readability": 9.0,
+      "simplicity": 9.0,
+      "static_metrics": {
+        "branch_markers": 5,
+        "chars": 821,
+        "dependency_markers": 1,
+        "nonblank_lines": 17,
+        "state_mentions": 0
+      },
+      "strengths": [
+        "Clear step-by-step process flow",
+        "Explicitly handles all success criteria",
+        "Simple markdown structure for a state machine"
+      ],
+      "weaknesses": [
+        "Assumes perfect execution of internal variables (e.g., `features`, `fixes`)",
+        "Lacks explicit error handling or tool-use instructions beyond the initial git log call"
+      ],
+      "weighted_overall": 8.8
+    },
+    {
+      "candidate": "microsoft_agent_framework",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "The artifact provides a highly readable and logically sound workflow that directly maps to all success criteria.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"microsoft_agent_framework\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 8,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step workflow structure\",\n    \"Explicitly addresses all success criteria in comments\",\n    \"Uses a structured framework for maintainability\"\n  ],\n  \"weaknesses\": [\n    \"Relies on assumed internal state management (ctx.state)\",\n    \"The transition logic is linear and lacks explicit error handling.\"\n  ],\n  \"notes\": \"The artifact provides a highly readable and logically sound workflow that directly maps to all success criteria.\"\n}",
+      "readability": 10.0,
+      "simplicity": 8.0,
+      "static_metrics": {
+        "branch_markers": 7,
+        "chars": 1603,
+        "dependency_markers": 20,
+        "nonblank_lines": 33,
+        "state_mentions": 10
+      },
+      "strengths": [
+        "Clear step-by-step workflow structure",
+        "Explicitly addresses all success criteria in comments",
+        "Uses a structured framework for maintainability"
+      ],
+      "weaknesses": [
+        "Relies on assumed internal state management (ctx.state)",
+        "The transition logic is linear and lacks explicit error handling."
+      ],
+      "weighted_overall": 9.15
+    },
+    {
+      "candidate": "openai_agents",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "The artifact provides an excellent, highly structured plan that maps perfectly to the task requirements.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"openai_agents\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure (Gather -> Categorize -> Generate)\",\n    \"Directly addresses all success criteria in the instructions\",\n    \"Uses function tools for clear execution steps\"\n  ],\n  \"weaknesses\": [\n    \"Relies heavily on a specific, complex agent framework syntax\",\n    \"The internal logic of state transitions is abstract and not executable code\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly structured plan that maps perfectly to the task requirements.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 5,
+        "chars": 2108,
+        "dependency_markers": 20,
+        "nonblank_lines": 44,
+        "state_mentions": 6
+      },
+      "strengths": [
+        "Explicit state machine structure (Gather -> Categorize -> Generate)",
+        "Directly addresses all success criteria in the instructions",
+        "Uses function tools for clear execution steps"
+      ],
+      "weaknesses": [
+        "Relies heavily on a specific, complex agent framework syntax",
+        "The internal logic of state transitions is abstract and not executable code"
+      ],
+      "weighted_overall": 8.4
+    },
+    {
+      "candidate": "pydantic_ai",
+      "case": "release_notes",
+      "fidelity": 10.0,
+      "notes": "This artifact provides an excellent, highly structured workflow using explicit state management and tool definitions that directly map to the required task steps.",
+      "overall": 9.0,
+      "performance": 9.0,
+      "raw_response": "{\n  \"candidate\": \"pydantic_ai\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine design (WorkflowState)\",\n  \"Clear separation of concerns into distinct states\",\n  \"High fidelity to all success criteria listed in the task description\"\n  ],\n  \"weaknesses\": [\n    \"Requires knowledge of a specific framework (pydantic_ai)\",\n    \"The use of abstract tools (`...`) makes execution flow hard to trace without implementation details.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured workflow using explicit state management and tool definitions that directly map to the required task steps.\"\n}",
+      "readability": 8.0,
+      "simplicity": 7.0,
+      "static_metrics": {
+        "branch_markers": 5,
+        "chars": 2229,
+        "dependency_markers": 27,
+        "nonblank_lines": 49,
+        "state_mentions": 12
+      },
+      "strengths": [
+        "Explicit state machine design (WorkflowState)",
+        "Clear separation of concerns into distinct states",
+        "High fidelity to all success criteria listed in the task description"
+      ],
+      "weaknesses": [
+        "Requires knowledge of a specific framework (pydantic_ai)",
+        "The use of abstract tools (`...`) makes execution flow hard to trace without implementation details."
+      ],
+      "weighted_overall": 8.4
+    }
+  ],
+  "started_at": "2026-06-16T14:39:48+00:00",
+  "summary": {
+    "candidate_summary": {
+      "dspy": {
+        "fidelity": 9.67,
+        "name": "DSPy",
+        "overall": 7.82,
+        "performance": 8.67,
+        "readability": 7.33,
+        "simplicity": 6.0
+      },
+      "ell": {
+        "fidelity": 10.0,
+        "name": "ell",
+        "overall": 8.4,
+        "performance": 9.0,
+        "readability": 8.0,
+        "simplicity": 7.0
+      },
+      "guidance": {
+        "fidelity": 10.0,
+        "name": "Guidance",
+        "overall": 8.4,
+        "performance": 9.0,
+        "readability": 8.0,
+        "simplicity": 7.0
+      },
+      "langgraph": {
+        "fidelity": 9.67,
+        "name": "LangGraph",
+        "overall": 8.23,
+        "performance": 8.67,
+        "readability": 8.33,
+        "simplicity": 6.67
+      },
+      "llamaindex_workflows": {
+        "fidelity": 10.0,
+        "name": "LlamaIndex Workflows",
+        "overall": 8.37,
+        "performance": 8.67,
+        "readability": 8.33,
+        "simplicity": 7.0
+      },
+      "lmql": {
+        "fidelity": 10.0,
+        "name": "LMQL",
+        "overall": 8.4,
+        "performance": 9.0,
+        "readability": 8.0,
+        "simplicity": 7.0
+      },
+      "mdscript": {
+        "fidelity": 9.67,
+        "name": "MDScript",
+        "overall": 9.23,
+        "performance": 8.67,
+        "readability": 9.67,
+        "simplicity": 9.33
+      },
+      "microsoft_agent_framework": {
+        "fidelity": 9.33,
+        "name": "Microsoft Agent Framework",
+        "overall": 8.77,
+        "performance": 8.67,
+        "readability": 9.67,
+        "simplicity": 7.67
+      },
+      "openai_agents": {
+        "fidelity": 10.0,
+        "name": "OpenAI Agents SDK",
+        "overall": 8.4,
+        "performance": 9.0,
+        "readability": 8.0,
+        "simplicity": 7.0
+      },
+      "pydantic_ai": {
+        "fidelity": 10.0,
+        "name": "Pydantic AI",
+        "overall": 8.4,
+        "performance": 9.0,
+        "readability": 8.0,
+        "simplicity": 7.0
+      }
+    },
+    "case_winners": {
+      "deploy_branch": {
+        "candidate": "mdscript",
+        "name": "MDScript",
+        "score": 9.4
+      },
+      "onboard_service": {
+        "candidate": "mdscript",
+        "name": "MDScript",
+        "score": 9.5
+      },
+      "release_notes": {
+        "candidate": "microsoft_agent_framework",
+        "name": "Microsoft Agent Framework",
+        "score": 9.15
+      }
+    }
+  },
+  "systems": {
+    "dspy": {
+      "kind": "Python LM programming framework with signatures/modules",
+      "name": "DSPy"
+    },
+    "ell": {
+      "kind": "Python LMP functions for model programs",
+      "name": "ell"
+    },
+    "guidance": {
+      "kind": "Prompt programming language embedded in Python",
+      "name": "Guidance"
+    },
+    "langgraph": {
+      "kind": "Python graph workflow for stateful agents",
+      "name": "LangGraph"
+    },
+    "llamaindex_workflows": {
+      "kind": "Python event-driven agent workflow",
+      "name": "LlamaIndex Workflows"
+    },
+    "lmql": {
+      "kind": "Language-model query language",
+      "name": "LMQL"
+    },
+    "mdscript": {
+      "kind": "Markdown state machine for coding agents",
+      "name": "MDScript"
+    },
+    "microsoft_agent_framework": {
+      "kind": "Python/.NET agent workflow framework",
+      "name": "Microsoft Agent Framework"
+    },
+    "openai_agents": {
+      "kind": "Python agent loop with tools, guardrails, and tracing",
+      "name": "OpenAI Agents SDK"
+    },
+    "pydantic_ai": {
+      "kind": "Typed Python agent framework",
+      "name": "Pydantic AI"
+    }
+  }
+}

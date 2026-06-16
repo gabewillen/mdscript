@@ -168,6 +168,25 @@ Developers can read and edit these workflows as normal Markdown. AI assistants e
 
 MDScript bridges human readability with machine executability by keeping structure minimal and relying on LLM language understanding for everything else.
 
+## Benchmark Results
+
+The latest representation-level LLM workflow benchmark used OpenAI `gpt-5.5` as a blinded judge across three workflow cases. See `benchmarks/llm-scripting/` for methodology, raw results, and analysis.
+
+<!-- latest LLM scripting benchmark summary from benchmarks/llm-scripting/results/latest.json -->
+
+| Rank | System | Overall | Performance | Readability | Simplicity | Fidelity |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | MDScript | 8.57 | 7.67 | 9.00 | 9.33 | 8.67 |
+| 2 | LMQL | 7.62 | 6.67 | 8.33 | 8.00 | 8.00 |
+| 3 | OpenAI Agents SDK | 7.57 | 6.67 | 8.33 | 8.00 | 7.67 |
+| 4 | Pydantic AI | 7.28 | 6.33 | 8.00 | 7.67 | 7.67 |
+| 5 | Microsoft Agent Framework | 6.53 | 4.33 | 7.67 | 8.00 | 7.33 |
+| 6 | Guidance | 6.48 | 5.00 | 7.67 | 6.67 | 7.67 |
+| 7 | ell | 6.23 | 4.67 | 7.33 | 6.67 | 7.33 |
+| 8 | LlamaIndex Workflows | 6.03 | 4.00 | 7.33 | 7.00 | 7.00 |
+| 9 | LangGraph | 5.70 | 3.33 | 7.67 | 6.67 | 6.33 |
+| 10 | DSPy | 5.15 | 3.00 | 6.67 | 5.33 | 7.33 |
+
 ## Install the `/mdscript` skill
 
 The **mdscript** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install it with the [skills CLI](https://github.com/vercel-labs/skills):
