@@ -1,34 +1,29 @@
 # LLM Scripting Benchmark
 
-This benchmark compares MDScript with modern LLM workflow and prompt-programming systems using a two-stage LLM execution and judgment loop. It is intentionally representation-level: each system gets an equivalent source artifact for the same repository workflow, an executor model attempts the workflow three times, and a judge model scores each produced result three times.
+This benchmark compares MDScript with probabilistic, human-readable LLM scripting systems using a two-stage LLM execution and judgment loop. It is intentionally representation-level: each system gets an equivalent source artifact for the same repository workflow, an executor model attempts the workflow three times, and a judge model scores each produced result three times.
 
 The default judge is `gemma4:e4b`, the smallest installed Gemma 4-family model in this environment. That is deliberate: a small local model is more likely to expose whether a format remains legible under long-horizon workflow pressure. For publishable judge results, run the OpenAI backend with `gpt-5.5` and `--blind-labels`.
 
 ## Research Notes
 
-The comparison set splits into three groups:
+The publishable comparison set is deliberately restricted to probabilistic scripting systems: source artifacts whose main job is to steer language-model behavior rather than provide deterministic runtime orchestration.
 
-- State/workflow orchestration: LangGraph, LlamaIndex Workflows, Microsoft Agent Framework, OpenAI Agents SDK, and Pydantic AI. LangGraph describes itself as infrastructure for long-running, stateful workflows and agents. LlamaIndex Workflows presents workflows as event-driven, step-based application control. Microsoft Agent Framework now positions workflows as graph-based multi-step tasks with type-safe routing, checkpointing, and human-in-the-loop support. OpenAI Agents SDK centers agents as LLMs configured with instructions, tools, handoffs, guardrails, and structured outputs. Pydantic AI is a typed Python agent framework for production GenAI applications.
-- Prompt and language-model programming: DSPy, Guidance, LMQL, and ell. DSPy emphasizes signatures, modules, and optimizers over hand-written prompts. Guidance and LMQL focus on constrained/scripted generation and control flow around model calls. ell treats prompts as functions with versioning, monitoring, and visualization.
-- Retired or de-emphasized systems: Microsoft Prompt Flow is documented as retired for new development and scheduled for full retirement on April 20, 2027, with migration guidance pointing to Microsoft Agent Framework, so it is research context rather than a primary benchmark target.
+- MDScript uses Markdown headings, links, variables, and natural-language instructions as an executable workflow artifact.
+- Guidance scripts model prompts and constrained generations with Python-hosted control flow.
+- LMQL expresses language-model queries with constraints over generated variables.
+- ell represents language-model programs as Python functions with prompt/tool structure.
 
-Sources used for current positioning:
+Programmatic agent and workflow frameworks are not part of the default benchmark. LangGraph, LlamaIndex Workflows, Microsoft Agent Framework, OpenAI Agents SDK, Pydantic AI, and DSPy are useful engineering tools, but they bring runtime machinery, typed state, tracing, graph control, or optimizer abstractions that answer a different question. They remain available in the harness through `--system-group all` for exploratory context, not as the headline comparison.
 
-- LangGraph docs: <https://docs.langchain.com/oss/python/langgraph/overview>
-- LlamaIndex Workflows docs: <https://developers.llamaindex.ai/python/llamaagents/workflows/>
-- Microsoft Agent Framework overview: <https://learn.microsoft.com/en-us/agent-framework/overview/>
-- OpenAI Agents SDK docs: <https://openai.github.io/openai-agents-python/agents/>
-- OpenAI model docs: <https://developers.openai.com/api/docs/models>
-- Pydantic AI overview: <https://pydantic.dev/docs/ai/overview/>
-- DSPy docs: <https://dspy.ai/>
+Sources used for positioning:
+
 - Guidance repository/docs: <https://github.com/guidance-ai/guidance>
 - LMQL docs: <https://lmql.ai/docs/latest/language/reference.html>
 - ell docs: <https://docs.ell.so/>
-- Prompt Flow retirement notice: <https://learn.microsoft.com/en-us/azure/machine-learning/prompt-flow/migrate-prompt-flow-to-agent-framework>
 
 ## Methodology
 
-The harness renders equivalent workflow artifacts for each candidate and case. For each artifact, it runs:
+The harness renders equivalent workflow artifacts for each probabilistic scripting candidate and case. For each artifact, it runs:
 
 1. Three independent execution attempts against a fixed task scenario.
 2. Three independent judgments for each produced execution result.
@@ -49,32 +44,26 @@ The order of judge calls is randomized with a fixed seed to reduce position effe
 
 The executor prompt treats natural-language bullets, comments, and instruction strings as workflow semantics. The judge prompt scores only produced execution results, not readability, simplicity, debuggability, or framework feature depth as independent virtues.
 
-This benchmark does not install or run every framework. That is a feature of the test, not a shortcut: MDScript is not competing as a Python runtime framework, so giving framework baselines their full runtime machinery would make the comparison less apples-to-apples for readability and workflow expression.
+This benchmark does not install or run each scripting library. That is intentional: MDScript is being tested as a readable workflow artifact for an LLM to execute, so the comparison holds the execution environment constant and varies the artifact representation.
 
 ## Latest Result
 
-The current run used OpenAI `gpt-5.5` with `--blind-labels`. It completed 90 executions and 270 judgments with zero parse failures.
+The current run used OpenAI `gpt-5.5` with `--blind-labels`. It completed 36 executions and 108 judgments with zero failed executions or judgments.
 
 <!-- latest LLM scripting benchmark summary from results/latest.json -->
 
 | Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | OpenAI Agents SDK | 9.71 | 9.93 | 9.56 | 9.33 | 0.29 | 27 |
-| 2 | DSPy | 9.54 | 9.81 | 9.44 | 8.85 | 0.30 | 27 |
-| 3 | ell | 9.39 | 9.56 | 9.22 | 9.22 | 0.55 | 27 |
-| 4 | Pydantic AI | 9.35 | 9.56 | 9.19 | 9.07 | 0.57 | 27 |
-| 5 | Guidance | 9.22 | 9.33 | 9.15 | 9.04 | 0.73 | 27 |
-| 6 | LMQL | 9.15 | 9.22 | 9.11 | 9.00 | 0.79 | 27 |
-| 7 | LangGraph | 9.05 | 9.26 | 8.85 | 8.81 | 0.64 | 27 |
-| 8 | LlamaIndex Workflows | 8.96 | 9.15 | 8.78 | 8.74 | 0.69 | 27 |
-| 9 | Microsoft Agent Framework | 8.94 | 9.07 | 8.81 | 8.78 | 0.71 | 27 |
-| 10 | MDScript | 8.87 | 8.89 | 8.93 | 8.67 | 0.75 | 27 |
+| 1 | MDScript | 9.73 | 9.89 | 9.67 | 9.33 | 0.35 | 27 |
+| 2 | Guidance | 9.67 | 9.81 | 9.59 | 9.37 | 0.36 | 27 |
+| 3 | ell | 9.65 | 9.78 | 9.63 | 9.30 | 0.37 | 27 |
+| 4 | LMQL | 9.65 | 9.81 | 9.56 | 9.30 | 0.39 | 27 |
 
 Case winners:
 
-- `release_notes`: OpenAI Agents SDK, 9.73.
-- `deploy_branch`: OpenAI Agents SDK, 9.80.
-- `onboard_service`: DSPy, 9.75.
+- `release_notes`: LMQL, 9.73.
+- `deploy_branch`: ell, 9.71.
+- `onboard_service`: MDScript, 9.93.
 
 ## Run
 
@@ -89,6 +78,7 @@ python3 benchmarks/llm-scripting/benchmark.py \
   --backend openai \
   --model gpt-5.5 \
   --blind-labels \
+  --system-group probabilistic \
   --execution-runs 3 \
   --judgments-per-run 3 \
   --env-file ../cortext/.env
@@ -100,7 +90,8 @@ Useful overrides:
 python3 benchmarks/llm-scripting/benchmark.py --backend ollama --model gemma4:e4b
 python3 benchmarks/llm-scripting/benchmark.py --model gemma4:e4b
 python3 benchmarks/llm-scripting/benchmark.py --cases release_notes,deploy_branch
-python3 benchmarks/llm-scripting/benchmark.py --systems mdscript,langgraph,guidance
+python3 benchmarks/llm-scripting/benchmark.py --systems mdscript,guidance,lmql
+python3 benchmarks/llm-scripting/benchmark.py --system-group all
 python3 benchmarks/llm-scripting/benchmark.py --execution-runs 1 --judgments-per-run 1
 python3 benchmarks/llm-scripting/benchmark.py --dry-run
 ```
@@ -124,12 +115,15 @@ Cases:
 Systems:
 
 - `mdscript`: Markdown state machine for coding agents.
+- `guidance`: prompt programming language embedded in Python.
+- `lmql`: language-model query language.
+- `ell`: Python LMP functions for model programs.
+
+Additional exploratory renderers available with `--system-group all`:
+
 - `langgraph`: Python graph workflow for stateful agents.
 - `llamaindex_workflows`: Python event-driven agent workflow.
 - `microsoft_agent_framework`: Python/.NET agent workflow framework.
 - `openai_agents`: Python agent loop with tools, guardrails, and tracing.
 - `pydantic_ai`: typed Python agent framework.
 - `dspy`: Python LM programming framework with signatures/modules.
-- `guidance`: prompt programming language embedded in Python.
-- `lmql`: language-model query language.
-- `ell`: Python LMP functions for model programs.

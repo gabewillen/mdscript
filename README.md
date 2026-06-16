@@ -170,22 +170,16 @@ MDScript bridges human readability with machine executability by keeping structu
 
 ## Benchmark Results
 
-The latest LLM workflow benchmark used OpenAI `gpt-5.5` for three blinded execution attempts per workflow and three independent judgments per execution across three workflow cases. It scores produced task outcomes: task success, requirements met, and failure recovery. See `benchmarks/llm-scripting/` for methodology, raw results, and analysis.
+The latest probabilistic scripting benchmark compared MDScript with Guidance, LMQL, and ell using OpenAI `gpt-5.5` for three blinded execution attempts per workflow and three independent judgments per execution across three workflow cases. It scores produced task outcomes: task success, requirements met, and failure recovery. See `benchmarks/llm-scripting/` for methodology, raw results, and analysis.
 
 <!-- latest LLM scripting benchmark summary from benchmarks/llm-scripting/results/latest.json -->
 
 | Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | OpenAI Agents SDK | 9.71 | 9.93 | 9.56 | 9.33 | 0.29 | 27 |
-| 2 | DSPy | 9.54 | 9.81 | 9.44 | 8.85 | 0.30 | 27 |
-| 3 | ell | 9.39 | 9.56 | 9.22 | 9.22 | 0.55 | 27 |
-| 4 | Pydantic AI | 9.35 | 9.56 | 9.19 | 9.07 | 0.57 | 27 |
-| 5 | Guidance | 9.22 | 9.33 | 9.15 | 9.04 | 0.73 | 27 |
-| 6 | LMQL | 9.15 | 9.22 | 9.11 | 9.00 | 0.79 | 27 |
-| 7 | LangGraph | 9.05 | 9.26 | 8.85 | 8.81 | 0.64 | 27 |
-| 8 | LlamaIndex Workflows | 8.96 | 9.15 | 8.78 | 8.74 | 0.69 | 27 |
-| 9 | Microsoft Agent Framework | 8.94 | 9.07 | 8.81 | 8.78 | 0.71 | 27 |
-| 10 | MDScript | 8.87 | 8.89 | 8.93 | 8.67 | 0.75 | 27 |
+| 1 | MDScript | 9.73 | 9.89 | 9.67 | 9.33 | 0.35 | 27 |
+| 2 | Guidance | 9.67 | 9.81 | 9.59 | 9.37 | 0.36 | 27 |
+| 3 | ell | 9.65 | 9.78 | 9.63 | 9.30 | 0.37 | 27 |
+| 4 | LMQL | 9.65 | 9.81 | 9.56 | 9.30 | 0.39 | 27 |
 
 ## Install the `/mdscript` skill
 

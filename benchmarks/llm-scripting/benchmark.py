@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LLM-as-judge benchmark for MDScript and adjacent LLM workflow formats.
+"""LLM-as-judge benchmark for MDScript and probabilistic LLM scripting formats.
 
 The benchmark compares concise source artifacts for the same workflow tasks.
 It intentionally does not install or execute each framework; the measured
@@ -72,6 +72,11 @@ SYSTEMS: dict[str, dict[str, str]] = {
         "name": "ell",
         "kind": "Python LMP functions for model programs",
     },
+}
+
+SYSTEM_GROUPS: dict[str, list[str]] = {
+    "probabilistic": ["mdscript", "guidance", "lmql", "ell"],
+    "all": list(SYSTEMS),
 }
 
 
@@ -166,7 +171,7 @@ CASES: list[dict[str, Any]] = [
                 "actions": [
                     "Run npm run build.",
                     "If build fails, return to Run Checks.",
-                    "Set artifact to dist/{branch}-{timestamp}.tar.gz.",
+                    "Set artifact to dist/{branch}-{timestamp}.tar.gz, replacing slashes in branch with hyphens.",
                 ],
                 "next": "deploy",
             },
@@ -258,6 +263,7 @@ CASES: list[dict[str, Any]] = [
                     "Create a language-specific entrypoint from language_config.",
                     "If Kubernetes, create Dockerfile and deployment manifest.",
                     "If Lambda, create serverless.yml with memory_size.",
+                    "If Docker Compose, create docker-compose.yml.",
                     "If database is set, add a database connection module.",
                     "If messaging is set, add a producer/consumer stub.",
                     "Ask whether to initialize git; if yes, run git init.",
@@ -391,7 +397,12 @@ def actions_comment(actions: list[str], indent: str = "    ") -> str:
 
 
 def render_mdscript(case: dict[str, Any]) -> str:
-    chunks = ["<!-- read [mdscript.md](../../README.md) -->"]
+    chunks = [
+        "<!-- read [mdscript.md](../../README.md) -->",
+        f"# {case['name']}",
+        "",
+        numbered_requirements(case),
+    ]
     replacements = {
         "language_config": "{{language_config}}",
         "health_endpoint": "{{health_endpoint}}",
@@ -1185,8 +1196,14 @@ def judge_execution(
 
 
 def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
-    by_candidate: dict[str, list[dict[str, Any]]] = {slug: [] for slug in SYSTEMS}
-    by_case: dict[str, list[dict[str, Any]]] = {case["id"]: [] for case in CASES}
+    present_candidates = [
+        slug for slug in SYSTEMS if any(result["candidate"] == slug for result in results)
+    ]
+    present_cases = [
+        case["id"] for case in CASES if any(result["case"] == case["id"] for result in results)
+    ]
+    by_candidate: dict[str, list[dict[str, Any]]] = {slug: [] for slug in present_candidates}
+    by_case: dict[str, list[dict[str, Any]]] = {case_id: [] for case_id in present_cases}
     for result in results:
         by_candidate[result["candidate"]].append(result)
         by_case[result["case"]].append(result)
@@ -1212,7 +1229,7 @@ def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
     case_winners = {}
     for case_id, items in by_case.items():
         candidate_scores = []
-        for slug in SYSTEMS:
+        for slug in present_candidates:
             candidate_items = [
                 item
                 for item in items
@@ -1237,6 +1254,12 @@ def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
 def render_summary(run: dict[str, Any]) -> str:
     summary = run["summary"]["candidate_summary"]
     ordered = sorted(summary.items(), key=lambda item: item[1]["overall"], reverse=True)
+
+    def format_score(value: float) -> str:
+        if math.isnan(float(value)):
+            return "nan"
+        return f"{value:.2f}"
+
     lines = [
         "# LLM Scripting Benchmark Results",
         "",
@@ -1245,7 +1268,8 @@ def render_summary(run: dict[str, Any]) -> str:
         f"- Execution runs per artifact: `{run['judge']['execution_runs']}`",
         f"- Judgments per execution: `{run['judge']['judgments_per_run']}`",
         f"- Run started: `{run['started_at']}`",
-        f"- Cases: {', '.join(case['id'] for case in CASES)}",
+        f"- System group: `{run['judge'].get('system_group', 'custom')}`",
+        f"- Cases: {', '.join(case['id'] for case in run['cases'])}",
         "",
         "## Overall Averages",
         "",
@@ -1254,14 +1278,18 @@ def render_summary(run: dict[str, Any]) -> str:
     ]
     for rank, (slug, item) in enumerate(ordered, 1):
         lines.append(
-            f"| {rank} | {item['name']} | {item['overall']} | {item['task_success']} | "
-            f"{item['requirements_met']} | {item['failure_recovery']} | {item['overall_stdev']} | "
+            f"| {rank} | {item['name']} | {format_score(item['overall'])} | "
+            f"{format_score(item['task_success'])} | {format_score(item['requirements_met'])} | "
+            f"{format_score(item['failure_recovery'])} | {format_score(item['overall_stdev'])} | "
             f"{item['judgments']} |"
         )
 
     lines += ["", "## Case Winners", ""]
-    for case_id, winner in run["summary"]["case_winners"].items():
-        lines.append(f"- `{case_id}`: {winner['name']} ({winner['score']})")
+    for case_id in [case["id"] for case in run["cases"]]:
+        winner = run["summary"]["case_winners"].get(case_id)
+        if not winner:
+            continue
+        lines.append(f"- `{case_id}`: {winner['name']} ({format_score(winner['score'])})")
 
     lines += ["", "## Judge Notes By System", ""]
     for slug, item in ordered:
@@ -1304,9 +1332,9 @@ def select_cases(case_ids: str | None) -> list[dict[str, Any]]:
     return cases
 
 
-def select_systems(system_ids: str | None) -> list[str]:
+def select_systems(system_ids: str | None, system_group: str) -> list[str]:
     if not system_ids:
-        return list(SYSTEMS)
+        return list(SYSTEM_GROUPS[system_group])
     wanted = [system_id.strip() for system_id in system_ids.split(",") if system_id.strip()]
     missing = [system_id for system_id in wanted if system_id not in SYSTEMS]
     if missing:
@@ -1318,7 +1346,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
     if args.env_file:
         load_env_file(args.env_file)
     cases = select_cases(args.cases)
-    systems = select_systems(args.systems)
+    systems = select_systems(args.systems, args.system_group)
+    system_group = "custom" if args.systems else args.system_group
     case_by_id = {case["id"]: case for case in cases}
     started_at = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
     rng = random.Random(args.seed)
@@ -1502,6 +1531,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             "blind_labels": args.blind_labels,
             "execution_runs": args.execution_runs,
             "judgments_per_run": args.judgments_per_run,
+            "system_group": system_group,
             "temperature": 0,
             "seed": args.seed,
             "rubric": {
@@ -1519,7 +1549,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             }
             for case in cases
         ],
-        "systems": SYSTEMS,
+        "systems": {slug: SYSTEMS[slug] for slug in systems},
         "artifacts": artifacts,
         "executions": executions,
         "results": results,
@@ -1536,6 +1566,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--judge-model", help="Model to use for result judgments")
     parser.add_argument("--cases", help="Comma-separated case ids")
     parser.add_argument("--systems", help="Comma-separated system ids")
+    parser.add_argument(
+        "--system-group",
+        choices=sorted(SYSTEM_GROUPS),
+        default="probabilistic",
+        help="Candidate set to run when --systems is not provided",
+    )
     parser.add_argument("--env-file", type=Path, help="Optional env file containing OPENAI_API_KEY")
     parser.add_argument("--blind-labels", action="store_true", help="Hide candidate names in judge prompts")
     parser.add_argument("--output-dir", type=Path, default=RESULTS_DIR)

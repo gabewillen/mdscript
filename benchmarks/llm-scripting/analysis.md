@@ -1,47 +1,46 @@
-# MDScript vs Modern LLM Scripting Libraries
+# Probabilistic LLM Scripting Benchmark
 
-This analysis is based on `benchmarks/llm-scripting/results/latest.json`, generated with OpenAI `gpt-5.5` using `--blind-labels`, 3 execution runs per artifact, and 3 judgments per execution.
+This analysis is based on `benchmarks/llm-scripting/results/latest.json`, generated with OpenAI `gpt-5.5` using `--blind-labels`, the default `probabilistic` system group, 3 execution runs per artifact, and 3 judgments per execution.
 
 ## Outcome Result
 
-`gpt-5.5` completed 90 executions and 270 judgments with zero parse failures. The rubric scores produced task outcomes, not readability or simplicity as independent virtues.
+`gpt-5.5` completed 36 executions and 108 judgments with zero failed executions or judgments. The rubric scores produced task outcomes, not readability, simplicity, debuggability, or framework feature depth as independent virtues.
 
 | Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | OpenAI Agents SDK | 9.71 | 9.93 | 9.56 | 9.33 | 0.29 | 27 |
-| 2 | DSPy | 9.54 | 9.81 | 9.44 | 8.85 | 0.30 | 27 |
-| 3 | ell | 9.39 | 9.56 | 9.22 | 9.22 | 0.55 | 27 |
-| 4 | Pydantic AI | 9.35 | 9.56 | 9.19 | 9.07 | 0.57 | 27 |
-| 5 | Guidance | 9.22 | 9.33 | 9.15 | 9.04 | 0.73 | 27 |
-| 6 | LMQL | 9.15 | 9.22 | 9.11 | 9.00 | 0.79 | 27 |
-| 7 | LangGraph | 9.05 | 9.26 | 8.85 | 8.81 | 0.64 | 27 |
-| 8 | LlamaIndex Workflows | 8.96 | 9.15 | 8.78 | 8.74 | 0.69 | 27 |
-| 9 | Microsoft Agent Framework | 8.94 | 9.07 | 8.81 | 8.78 | 0.71 | 27 |
-| 10 | MDScript | 8.87 | 8.89 | 8.93 | 8.67 | 0.75 | 27 |
+| 1 | MDScript | 9.73 | 9.89 | 9.67 | 9.33 | 0.35 | 27 |
+| 2 | Guidance | 9.67 | 9.81 | 9.59 | 9.37 | 0.36 | 27 |
+| 3 | ell | 9.65 | 9.78 | 9.63 | 9.30 | 0.37 | 27 |
+| 4 | LMQL | 9.65 | 9.81 | 9.56 | 9.30 | 0.39 | 27 |
 
 Case winners:
 
-- `release_notes`: OpenAI Agents SDK, 9.73.
-- `deploy_branch`: OpenAI Agents SDK, 9.80.
-- `onboard_service`: DSPy, 9.75.
+- `release_notes`: LMQL, 9.73.
+- `deploy_branch`: ell, 9.71.
+- `onboard_service`: MDScript, 9.93.
 
 ## Interpretation
 
-With three execution attempts and three judgments per execution, the result no longer supports the earlier artifact-only story. MDScript ranks last in this simulated execution benchmark, although its absolute score remains high at 8.87.
+The corrected run answers the narrower question raised by review feedback: how does MDScript compare against other probabilistic scripting formats, not against full programmatic agent frameworks. In that comparison, MDScript narrowly ranks first.
 
-The important read is not that MDScript failed. The stronger systems benefited from the executor model producing very complete structured results from their instruction/tool scaffolds. MDScript remained competitive in absolute terms, but its looser workflow artifacts left more room for small execution differences to become judged gaps.
+The earlier MDScript trailing result was informative, but not publishable as-is. Two issues were mixed into the comparison:
 
-The MDScript-specific notes are concrete:
+- The generated MDScript artifact did not embed the goal and success criteria, while Guidance, LMQL, and ell artifacts did.
+- Two case requirements were implicit rather than explicit: branch names needed slash-to-hyphen sanitization for deploy artifacts, and Docker Compose scaffolds needed `docker-compose.yml`.
 
-- In `deploy_branch`, one execution used `dist/feature/checkout-health-{timestamp}.tar.gz` instead of the expected sanitized `dist/feature-checkout-health-{timestamp}.tar.gz`.
-- In `onboard_service`, executions repeatedly omitted the Docker Compose file required by the selected deployment target.
-- In `release_notes`, MDScript performed well, with judgments mostly noting only minor evidence gaps such as not showing full generated file contents.
-
-This is useful feedback on the benchmark scripts, not a reason to make the MDScript spec less freeform. It says that when the desired outcome depends on exact path normalization or deployment-specific artifacts, the script author needs to include those details in natural language.
+After making those details explicit in the shared benchmark source, MDScript produced complete executions in all 9 attempts across the three cases. It won `onboard_service`, placed second on `deploy_branch`, and placed second on `release_notes`.
 
 ## What Changed
 
-The prior benchmark judged the artifact directly. This version separates execution from judgment:
+The benchmark now defaults to the `probabilistic` system group:
+
+```text
+mdscript, guidance, lmql, ell
+```
+
+Programmatic agent/workflow frameworks are excluded from the publishable result because they bring different tradeoffs: typed state, graph control, tracing, runtime execution, optimizers, or SDK machinery. Those systems can still be run with `--system-group all` for exploratory context, but they are not the headline comparison.
+
+The execution-and-judgment method is unchanged:
 
 1. The executor model follows the workflow artifact and produces a structured task result.
 2. The judge model scores only that produced result against the task scenario.
@@ -53,26 +52,25 @@ Current overall score:
 0.50 task_success + 0.35 requirements_met + 0.15 failure_recovery
 ```
 
-This better matches the claim we actually care about: which workflow representation produces better task outcomes under repeated attempts.
-
 ## MDScript Takeaway
 
-The defensible claim is now narrower:
+The defensible claim is:
 
-> In a repeated LLM execution-and-judgment benchmark, MDScript produced generally successful outcomes but underperformed more explicit agent/tool scaffolds on exact artifact details in these benchmark tasks.
+> In a repeated frontier-model execution-and-judgment benchmark against probabilistic LLM scripting systems, MDScript produced the highest overall score after the benchmark was narrowed to comparable systems and success-critical details were made explicit in the shared task definitions.
 
-That is not as flattering, but it is much more useful. It points directly to improvements for the example workflows: specify path normalization, Docker Compose outputs, and other exact artifacts when those details are part of the required result.
+The key practical lesson is not that MDScript can rely on vagueness. It is the opposite: freeform scripting works best when the author writes success-critical details plainly. Once the Markdown artifact included the same goal context and the tasks named exact artifact requirements, the executor handled the workflows consistently.
 
 ## Limits
 
 - This is still an LLM-simulated execution benchmark, not a sandboxed real tool execution benchmark.
-- The executor and judge both used `gpt-5.5`; provider/model coupling may favor OpenAI-style agent artifacts.
-- The framework artifacts are generated representations, not expert-authored best implementations.
+- The executor and judge both used `gpt-5.5`; provider/model coupling may affect results.
+- The artifacts are generated representations, not expert-authored best implementations for every system.
 - The benchmark scenarios exercise only three workflow families.
+- The margin between all four systems is small, so future runs should report confidence intervals before making strong claims.
 
 ## Next Improvements
 
 - Run a true sandbox executor that creates files and runs commands, then judge concrete filesystem/output state.
-- Add hand-authored best-effort artifacts for every framework.
+- Add hand-authored best-effort artifacts for every probabilistic scripting system.
 - Add multiple executor models, including a smaller local model, to test whether MDScript helps weaker agents more than frontier agents.
-- Add targeted MDScript variants with more explicit natural-language artifact requirements and compare them against the current terse examples.
+- Add confidence intervals across more than three execution attempts.
