@@ -73,12 +73,12 @@
       }
     },
     "deploy_branch::mdscript": {
-      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Select Branch\n\n* If {{branch}} is empty, ask the user for the {{branch}} name.\n* If {{branch}} is main, warn that deployment requires approval.\n* Ask for confirmation before proceeding with main.\n* continue to [Run Checks](#run-checks)\n\n## Run Checks\n\n* Run npm run typecheck and stop with errors on failure.\n* Run npm run test -- --coverage.\n* If coverage is below 80 percent, warn and ask whether to proceed.\n* continue to [Build Artifact](#build-artifact)\n\n## Build Artifact\n\n* Run npm run build.\n* If build fails, return to Run Checks. [link target: Run Checks]\n* Set {{artifact}} to dist/{{{branch}}}-{{{timestamp}}}.tar.gz.\n* continue to [Deploy](#deploy)\n\n## Deploy\n\n* Deploy {{artifact}} to {{environment}}.\n* On success, notify Slack and continue to Verify Deployment.\n* On failure, roll back to the previous version, notify the team, and return to Select Branch. [link target: Select Branch]\n* continue to [Verify Deployment](#verify-deployment)\n\n## Verify Deployment\n\n* Run a health check against {{deploy_url}}/health.\n* Retry failed health checks up to three times.\n* If health passes, mark the deploy complete.\n* If health still fails after three retries, roll back and return to Select Branch. [link target: Select Branch]",
+      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Select Branch\n\n* If {{branch}} is empty, ask the user for the {{branch}} name.\n* If {{branch}} is main, warn that deployment requires approval.\n* Ask for confirmation before proceeding with main.\n* continue to [Run Checks](#run-checks)\n\n## Run Checks\n\n* Run npm run typecheck and stop with errors on failure.\n* Run npm run test -- --coverage.\n* If coverage is below 80 percent, warn and ask whether to proceed.\n* continue to [Build Artifact](#build-artifact)\n\n## Build Artifact\n\n* Run npm run build.\n* If build fails, return to Run Checks. [link target: Run Checks]\n* Set {{artifact}} to dist/{{branch}}-{{timestamp}}.tar.gz.\n* continue to [Deploy](#deploy)\n\n## Deploy\n\n* Deploy {{artifact}} to {{environment}}.\n* On success, notify Slack and continue to Verify Deployment.\n* On failure, roll back to the previous version, notify the team, and return to Select Branch. [link target: Select Branch]\n* continue to [Verify Deployment](#verify-deployment)\n\n## Verify Deployment\n\n* Run a health check against {{deploy_url}}/health.\n* Retry failed health checks up to three times.\n* If health passes, mark the deploy complete.\n* If health still fails after three retries, roll back and return to Select Branch. [link target: Select Branch]",
       "candidate": "mdscript",
       "case": "deploy_branch",
       "metrics": {
         "branch_markers": 15,
-        "chars": 1286,
+        "chars": 1282,
         "dependency_markers": 0,
         "nonblank_lines": 26,
         "state_mentions": 0
@@ -193,12 +193,12 @@
       }
     },
     "onboard_service::mdscript": {
-      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Name Service\n\n* If {{service_name}} is empty, ask the user for a name.\n* If {{service_name}} has spaces or uppercase letters, warn and ask again for kebab-case.\n* Set {{service_path}} to services/{{{service_name}}}.\n* continue to [Choose Language](#choose-language)\n\n## Choose Language\n\n* Ask for {{language}}: Go, TypeScript, Rust, or other.\n* If {{language}} is other, ask for a custom runtime.\n* Set {{language_config}} from the chosen {{language}} or custom runtime.\n* continue to [Pick Stack](#pick-stack)\n\n## Pick Stack\n\n* Ask for {{database}}: PostgreSQL, SQLite, or none.\n* Ask for {{messaging}}: Kafka, NATS, or none.\n* Ask whether to use an HTTP framework or a raw server.\n* continue to [Configure Deployment](#configure-deployment)\n\n## Configure Deployment\n\n* Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n* If Kubernetes, ask whether a helm chart is needed.\n* If Lambda, ask for {{memory_size}} in MB.\n* Ask whether the service exposes a health endpoint.\n* continue to [Scaffold](#scaffold)\n\n## Scaffold\n\n* Create {{service_path}}/README.md with a service description.\n* Create a {{language}}-specific entrypoint from {{language_config}}.\n* If Kubernetes, create Dockerfile and deployment manifest.\n* If Lambda, create serverless.yml with {{memory_size}}.\n* If {{database}} is set, add a {{database}} connection module.\n* If {{messaging}} is set, add a producer/consumer stub.\n* Ask whether to initialize git; if yes, run git init.\n* continue to [Verify](#verify)\n\n## Verify\n\n* Ask whether to run the service locally now.\n* If yes, start the service in development mode.\n* If no, print the scaffold summary.",
+      "artifact": "<!-- read [mdscript.md](../../README.md) -->\n\n## Name Service\n\n* If {{service_name}} is empty, ask the user for a name.\n* If {{service_name}} has spaces or uppercase letters, warn and ask again for kebab-case.\n* Set {{service_path}} to services/{{service_name}}.\n* continue to [Choose Language](#choose-language)\n\n## Choose Language\n\n* Ask for {{language}}: Go, TypeScript, Rust, or other.\n* If {{language}} is other, ask for a custom runtime.\n* Set {{language_config}} from the chosen {{language}} or custom runtime.\n* continue to [Pick Stack](#pick-stack)\n\n## Pick Stack\n\n* Ask for {{database}}: PostgreSQL, SQLite, or none.\n* Ask for {{messaging}}: Kafka, NATS, or none.\n* Ask whether to use an HTTP framework or a raw server.\n* continue to [Configure Deployment](#configure-deployment)\n\n## Configure Deployment\n\n* Ask for deployment target: Kubernetes, Lambda, or Docker Compose.\n* If Kubernetes, ask whether a helm chart is needed.\n* If Lambda, ask for {{memory_size}} in MB.\n* Ask whether the service exposes a health endpoint.\n* continue to [Scaffold](#scaffold)\n\n## Scaffold\n\n* Create {{service_path}}/README.md with a service description.\n* Create a {{language}}-specific entrypoint from {{language_config}}.\n* If Kubernetes, create Dockerfile and deployment manifest.\n* If Lambda, create serverless.yml with {{memory_size}}.\n* If {{database}} is set, add a {{database}} connection module.\n* If {{messaging}} is set, add a producer/consumer stub.\n* Ask whether to initialize git; if yes, run git init.\n* continue to [Verify](#verify)\n\n## Verify\n\n* Ask whether to run the service locally now.\n* If yes, start the service in development mode.\n* If no, print the scaffold summary.",
       "candidate": "mdscript",
       "case": "onboard_service",
       "metrics": {
         "branch_markers": 24,
-        "chars": 1688,
+        "chars": 1686,
         "dependency_markers": 2,
         "nonblank_lines": 35,
         "state_mentions": 0
@@ -407,10 +407,11 @@
     }
   ],
   "judge": {
-    "backend": "ollama",
-    "model": "gemma4:e4b",
+    "backend": "openai",
+    "blind_labels": true,
+    "model": "gpt-5.5",
     "rubric": {
-      "overall_formula": "0.35 performance + 0.25 readability + 0.25 simplicity + 0.15 fidelity",
+      "overall_formula": "0.45 task_success + 0.30 requirements_met + 0.15 failure_recovery + 0.10 consistency",
       "scale": "1-10, higher is better"
     },
     "seed": 17,
@@ -420,13 +421,12 @@
     {
       "candidate": "dspy",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact successfully models the required complex workflow using an explicit state machine, achieving high fidelity to all success criteria.",
-      "overall": 8.5,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"dspy\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 7,\n  \"simplicity\": 6,\n  \"fidelity\": 10,\n  \"overall\": 8.5,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria (branch selection, confirmation, testing, artifact building, deployment failure handling, health check retries)\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a complex internal loop and decision module for control flow\",\n    \"The use of dspy.ChainOfThought might overcomplicate simple state transitions\"\n  ],\n  \"notes\": \"The artifact successfully models the required complex workflow using an explicit state machine, achieving high fidelity to all success criteria.\"\n}",
-      "readability": 7.0,
-      "simplicity": 6.0,
+      "consistency": 4.0,
+      "failure_recovery": 5.0,
+      "notes": "The artifact states most required workflow semantics, but relies on a generative next-action loop without deterministic execution, state updates, or robust failure handling.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"dspy\",\"case\":\"deploy_branch\",\"task_success\":5,\"requirements_met\":8,\"failure_recovery\":5,\"consistency\":4,\"overall\":6,\"strengths\":[\"covers all major required stages\",\"explicit main approval gate\",\"includes coverage warning confirmation\",\"includes deployment rollback and health retries\"],\"weaknesses\":[\"actions are delegated to an unconstrained LLM decision step\",\"no concrete tool execution or variable updates\",\"ambiguous terminal transition from verify_deployment to done\",\"rejected confirmations and check failures are underspecified\"],\"notes\":\"The artifact states most required workflow semantics, but relies on a generative next-action loop without deterministic execution, state updates, or robust failure handling.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 17,
         "chars": 2830,
@@ -435,25 +435,27 @@
         "state_mentions": 14
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria (branch selection, confirmation, testing, artifact building, deployment failure handling, health check retries)"
+        "covers all major required stages",
+        "explicit main approval gate",
+        "includes coverage warning confirmation"
       ],
+      "task_success": 5.0,
       "weaknesses": [
-        "Relies on a complex internal loop and decision module for control flow",
-        "The use of dspy.ChainOfThought might overcomplicate simple state transitions"
+        "actions are delegated to an unconstrained LLM decision step",
+        "no concrete tool execution or variable updates",
+        "ambiguous terminal transition from verify_deployment to done"
       ],
-      "weighted_overall": 7.9
+      "weighted_overall": 5.8
     },
     {
       "candidate": "ell",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact successfully maps all required success criteria into a detailed and robust state machine workflow.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"ell\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria (branch selection, confirmation, tests, coverage warning, artifact building, deployment failure rollback, health check retries)\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a complex internal framework (`ell.complex`) which might be opaque to non-experts\",\n    \"The state transition logic is embedded in a single large string prompt, making it hard to follow the flow without careful reading.\"\n  ],\n  \"notes\": \"The artifact successfully maps all required success criteria into a detailed and robust state machine workflow.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 7.0,
+      "notes": "The artifact restates nearly all required workflow semantics, but several operational steps are underspecified enough to reduce reliability.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"candidate_10\",\"case\":\"deploy_branch\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":7,\"consistency\":6,\"overall\":7,\"strengths\":[\"explicitly covers branch prompt and main confirmation\",\"runs typecheck and coverage before build\",\"specifies rollback on deploy and health failures\",\"specifies three health-check retries\"],\"weaknesses\":[\"deploy, rollback, notify, and health-check commands are vague\",\"does not ask for missing environment\",\"timestamped artifact is named but not clearly packaged\",\"confirmation rejection paths are underspecified\",\"state-update mechanics are ambiguous\"],\"notes\":\"The artifact restates nearly all required workflow semantics, but several operational steps are underspecified enough to reduce reliability.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 18,
         "chars": 2589,
@@ -462,25 +464,27 @@
         "state_mentions": 16
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria (branch selection, confirmation, tests, coverage warning, artifact building, deployment failure rollback, health check retries)"
+        "explicitly covers branch prompt and main confirmation",
+        "runs typecheck and coverage before build",
+        "specifies rollback on deploy and health failures"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies on a complex internal framework (`ell.complex`) which might be opaque to non-experts",
-        "The state transition logic is embedded in a single large string prompt, making it hard to follow the flow without careful reading."
+        "deploy, rollback, notify, and health-check commands are vague",
+        "does not ask for missing environment",
+        "timestamped artifact is named but not clearly packaged"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.2
     },
     {
       "candidate": "guidance",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact successfully maps all success criteria into a robust and detailed state machine workflow.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"guidance\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly defines all required states and transitions.\",\n    \"Covers complex failure handling (rollback, retries) accurately.\",\n    \"Uses a structured state machine approach.\"\n  ],\n  \"weaknesses\": [\n    \"Relies on an advanced, specialized framework (Guidance).\",\n    \"The loop structure is somewhat abstract for direct execution review.\"\n  ],\n  \"notes\": \"The artifact successfully maps all success criteria into a robust and detailed state machine workflow.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 7.0,
+      "notes": "The artifact states nearly all required behavior in natural language, but the executable loop does not enforce the conditions or transitions, making outcomes dependent on the agent's faithful interpretation.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"candidate_08\",\"case\":\"deploy_branch\",\"task_success\":8,\"requirements_met\":8,\"failure_recovery\":7,\"consistency\":6,\"overall\":7,\"strengths\":[\"explicitly covers all major deployment stages\",\"includes main-branch confirmation\",\"includes rollback paths for deploy and health failures\"],\"weaknesses\":[\"state transitions are selected freely and can skip required steps\",\"requested environment and missing environment handling are underspecified\",\"artifact creation is described but not concretely packaged\"],\"notes\":\"The artifact states nearly all required behavior in natural language, but the executable loop does not enforce the conditions or transitions, making outcomes dependent on the agent's faithful interpretation.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 17,
         "chars": 2534,
@@ -489,26 +493,27 @@
         "state_mentions": 15
       },
       "strengths": [
-        "Explicitly defines all required states and transitions.",
-        "Covers complex failure handling (rollback, retries) accurately.",
-        "Uses a structured state machine approach."
+        "explicitly covers all major deployment stages",
+        "includes main-branch confirmation",
+        "includes rollback paths for deploy and health failures"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "Relies on an advanced, specialized framework (Guidance).",
-        "The loop structure is somewhat abstract for direct execution review."
+        "state transitions are selected freely and can skip required steps",
+        "requested environment and missing environment handling are underspecified",
+        "artifact creation is described but not concretely packaged"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.65
     },
     {
       "candidate": "langgraph",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact successfully maps all required steps and failure conditions into a logical, stateful workflow.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"langgraph\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly addresses all success criteria (e.g., branch check, main deployment confirmation, coverage warning, rollback/retry logic).\",\n    \"Uses a structured graph approach for clear state transitions and failure handling.\"\n  ],\n  \"weaknesses\": [\n    \"The implementation relies on abstract function definitions rather than concrete tool calls or detailed logic flow.\",\n    \"Some complex error handling (like retries and rollbacks) are described in comments but not fully modeled in the graph structure itself.\"\n  ],\n  \"notes\": \"The artifact successfully maps all required steps and failure conditions into a logical, stateful workflow.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 4.0,
+      "failure_recovery": 4.0,
+      "notes": "The artifact states most required behavior in comments, but the executable graph is linear and lacks concrete branching, retries, rollback paths, or user-confirmation handling.",
+      "overall": 5.0,
+      "raw_response": "{\"candidate\":\"langgraph\",\"case\":\"deploy_branch\",\"task_success\":5,\"requirements_met\":7,\"failure_recovery\":4,\"consistency\":4,\"overall\":5,\"strengths\":[\"comments cover all major deployment steps\",\"orders checks before build\",\"mentions rollback and health retries\"],\"weaknesses\":[\"node bodies do not implement the described actions\",\"conditional routing and retry loops are not encoded\",\"failure and confirmation outcomes are ambiguous\"],\"notes\":\"The artifact states most required behavior in comments, but the executable graph is linear and lacks concrete branching, retries, rollback paths, or user-confirmation handling.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 20,
         "chars": 2854,
@@ -517,25 +522,27 @@
         "state_mentions": 57
       },
       "strengths": [
-        "Explicitly addresses all success criteria (e.g., branch check, main deployment confirmation, coverage warning, rollback/retry logic).",
-        "Uses a structured graph approach for clear state transitions and failure handling."
+        "comments cover all major deployment steps",
+        "orders checks before build",
+        "mentions rollback and health retries"
       ],
+      "task_success": 5.0,
       "weaknesses": [
-        "The implementation relies on abstract function definitions rather than concrete tool calls or detailed logic flow.",
-        "Some complex error handling (like retries and rollbacks) are described in comments but not fully modeled in the graph structure itself."
+        "node bodies do not implement the described actions",
+        "conditional routing and retry loops are not encoded",
+        "failure and confirmation outcomes are ambiguous"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 5.35
     },
     {
       "candidate": "llamaindex_workflows",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact provides a highly detailed and structured plan that meets all success criteria, though actual implementation details like retry loops are only commented out.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"llamaindex_workflows\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly addresses all success criteria in the workflow steps.\",\n    \"Clear separation of concerns using distinct event types and methods.\"\n  ],\n  \"weaknesses\": [\n    \"The use of a specific framework (LlamaIndex) might increase initial setup complexity for non-users.\",\n    \"Error handling logic is described but not fully implemented in the provided code structure.\"\n  ],\n  \"notes\": \"The artifact provides a highly detailed and structured plan that meets all success criteria, though actual implementation details like retry loops are only commented out.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 5.0,
+      "failure_recovery": 5.0,
+      "notes": "The artifact states nearly all required behaviors in comments, but the executable workflow lacks conditional transitions and concrete tool semantics, making correct end-to-end execution only moderately likely.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"llamaindex_workflows\",\"case\":\"deploy_branch\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":5,\"consistency\":5,\"overall\":6,\"strengths\":[\"covers most required deployment steps in comments\",\"explicit main confirmation and coverage warning\",\"mentions rollback on deploy and health failures\"],\"weaknesses\":[\"actual code unconditionally advances through steps\",\"deploy, rollback, health check, and environment handling are vague\",\"rejected confirmations and failed checks are not concretely modeled\"],\"notes\":\"The artifact states nearly all required behaviors in comments, but the executable workflow lacks conditional transitions and concrete tool semantics, making correct end-to-end execution only moderately likely.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 15,
         "chars": 2550,
@@ -544,25 +551,27 @@
         "state_mentions": 71
       },
       "strengths": [
-        "Explicitly addresses all success criteria in the workflow steps.",
-        "Clear separation of concerns using distinct event types and methods."
+        "covers most required deployment steps in comments",
+        "explicit main confirmation and coverage warning",
+        "mentions rollback on deploy and health failures"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "The use of a specific framework (LlamaIndex) might increase initial setup complexity for non-users.",
-        "Error handling logic is described but not fully implemented in the provided code structure."
+        "actual code unconditionally advances through steps",
+        "deploy, rollback, health check, and environment handling are vague",
+        "rejected confirmations and failed checks are not concretely modeled"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.05
     },
     {
       "candidate": "lmql",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"lmql\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria thoroughly\",\n  \"weaknesses]: [\",\n  \"The use of a specialized query language (LMQL) adds complexity for general maintainers.\",\n  \"notes\\\": \\\"This artifact provides an excellent, highly detailed workflow definition that meets all specified requirements.\\\" \"\n  ]\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 7.0,
+      "failure_recovery": 7.0,
+      "notes": "The artifact states nearly all required workflow behavior, but leaves some operational details and negative confirmation transitions ambiguous.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"lmql\",\"case\":\"deploy_branch\",\"task_success\":8,\"requirements_met\":9,\"failure_recovery\":7,\"consistency\":7,\"overall\":8,\"strengths\":[\"explicitly covers branch selection, main confirmation, checks, coverage gate, deploy rollback, and health retries\",\"clear state sequence with named transitions\"],\"weaknesses\":[\"rejection paths for confirmations are not specified\",\"artifact packaging and deploy tooling are vague\",\"environment missing case is not handled\"],\"notes\":\"The artifact states nearly all required workflow behavior, but leaves some operational details and negative confirmation transitions ambiguous.\"}",
+      "requirements_met": 9.0,
       "static_metrics": {
         "branch_markers": 18,
         "chars": 2248,
@@ -571,50 +580,55 @@
         "state_mentions": 10
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria thoroughly",
-        "weaknesses]: ["
+        "explicitly covers branch selection, main confirmation, checks, coverage gate, deploy rollback, and health retries",
+        "clear state sequence with named transitions"
       ],
-      "weaknesses": [],
-      "weighted_overall": 8.4
+      "task_success": 8.0,
+      "weaknesses": [
+        "rejection paths for confirmations are not specified",
+        "artifact packaging and deploy tooling are vague",
+        "environment missing case is not handled"
+      ],
+      "weighted_overall": 8.05
     },
     {
       "candidate": "mdscript",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact is highly effective, providing a clear, comprehensive, and robust workflow that meets all specified requirements.",
-      "overall": 10.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"mdscript\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 9,\n  \"fidelity\": 10,\n  \"overall\": 10,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Clear failure handling and rollback logic\",\n    \"Directly addresses all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"None observed\"\n  ],\n  \"notes\": \"The artifact is highly effective, providing a clear, comprehensive, and robust workflow that meets all specified requirements.\"\n}",
-      "readability": 10.0,
-      "simplicity": 9.0,
+      "consistency": 8.0,
+      "failure_recovery": 7.0,
+      "notes": "The workflow satisfies most required deployment semantics, with minor ambiguity around packaging, failure stops, and branch/coverage confirmation rejection paths.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"mdscript\",\"case\":\"deploy_branch\",\"task_success\":8,\"requirements_met\":8,\"failure_recovery\":7,\"consistency\":8,\"overall\":8,\"strengths\":[\"asks for missing branch\",\"main deploy confirmation\",\"typecheck and coverage before build\",\"coverage warning and confirmation\",\"deployment failure rollback and notification\",\"health check retries with rollback\"],\"weaknesses\":[\"artifact packaging is implied rather than executed\",\"test failure handling is not explicit\",\"rejected confirmations are not explicitly handled\",\"deploy step has a slightly ambiguous unconditional continue\"],\"notes\":\"The workflow satisfies most required deployment semantics, with minor ambiguity around packaging, failure stops, and branch/coverage confirmation rejection paths.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 15,
-        "chars": 1286,
+        "chars": 1282,
         "dependency_markers": 0,
         "nonblank_lines": 26,
         "state_mentions": 0
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Clear failure handling and rollback logic",
-        "Directly addresses all success criteria"
+        "asks for missing branch",
+        "main deploy confirmation",
+        "typecheck and coverage before build"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "None observed"
+        "artifact packaging is implied rather than executed",
+        "test failure handling is not explicit",
+        "rejected confirmations are not explicitly handled"
       ],
-      "weighted_overall": 9.4
+      "weighted_overall": 7.85
     },
     {
       "candidate": "microsoft_agent_framework",
       "case": "deploy_branch",
-      "fidelity": 8.0,
-      "notes": "The artifact covers most criteria but misses specific confirmations and detailed error handling requirements.",
-      "overall": 8.0,
-      "performance": 8.0,
-      "raw_response": "{\n  \"candidate\": \"microsoft_agent_framework\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 7,\n  \"fidelity\": 8,\n  \"overall\": 8,\n  \"strengths\": [\n    \"Clear step-by-step workflow structure\",\n    \"Explicit handling of failure and rollback logic (deploy/verify)\"\n  ],\n  \"weaknesses\": [\n    \"Missing explicit confirmation for main branch deployment\",\n    \"Does not fully implement the required retry loop in verification\"\n  ],\n  \"notes\": \"The artifact covers most criteria but misses specific confirmations and detailed error handling requirements.\"\n}",
-      "readability": 9.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 6.0,
+      "notes": "The artifact states nearly all required workflow semantics, but relies on comments and has ambiguous conditional control flow, reducing reliability if executed as authored.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"microsoft_agent_framework\",\"case\":\"deploy_branch\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":6,\"consistency\":6,\"overall\":7,\"strengths\":[\"covers all major required deployment stages\",\"explicit main and low-coverage confirmations\",\"includes rollback on deployment and health failures\",\"specifies three health-check retries\"],\"weaknesses\":[\"behavior is mostly expressed as comments rather than executable step logic\",\"conditional transitions are not encoded in the builder graph\",\"deployment environment and rollback mechanics are vague\",\"rejected confirmations and failed checks are not clearly handled\"],\"notes\":\"The artifact states nearly all required workflow semantics, but relies on comments and has ambiguous conditional control flow, reducing reliability if executed as authored.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 19,
         "chars": 2350,
@@ -623,25 +637,27 @@
         "state_mentions": 16
       },
       "strengths": [
-        "Clear step-by-step workflow structure",
-        "Explicit handling of failure and rollback logic (deploy/verify)"
+        "covers all major required deployment stages",
+        "explicit main and low-coverage confirmations",
+        "includes rollback on deployment and health failures"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Missing explicit confirmation for main branch deployment",
-        "Does not fully implement the required retry loop in verification"
+        "behavior is mostly expressed as comments rather than executable step logic",
+        "conditional transitions are not encoded in the builder graph",
+        "deployment environment and rollback mechanics are vague"
       ],
-      "weighted_overall": 8.0
+      "weighted_overall": 7.05
     },
     {
       "candidate": "openai_agents",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact provides a highly detailed and robust workflow definition that meets all specified requirements.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"openai_agents\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Comprehensive failure handling (rollback/retry)\",\n    \"Directly addresses all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of the 'agents' framework\",\n    \"State transitions are defined in natural language, which could be brittle\"\n  ],\n  \"notes\": \"The artifact provides a highly detailed and robust workflow definition that meets all specified requirements.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 6.0,
+      "notes": "The workflow states most required behavior, but several key actions are underspecified enough that reliable end-to-end deployment would require agent inference.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"openai_agents\",\"case\":\"deploy_branch\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":6,\"consistency\":6,\"overall\":6,\"strengths\":[\"explicit branch prompt and main confirmation\",\"checks before build\",\"coverage warning and confirmation\",\"rollback paths for deploy and health failures\"],\"weaknesses\":[\"deployment environment and deploy_url are not acquired when missing\",\"artifact path is set but tarball creation is not specified\",\"deploy and rollback commands are vague\",\"rejected confirmations and failed checks have ambiguous terminal behavior\"],\"notes\":\"The workflow states most required behavior, but several key actions are underspecified enough that reliable end-to-end deployment would require agent inference.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 17,
         "chars": 2629,
@@ -650,26 +666,27 @@
         "state_mentions": 8
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Comprehensive failure handling (rollback/retry)",
-        "Directly addresses all success criteria"
+        "explicit branch prompt and main confirmation",
+        "checks before build",
+        "coverage warning and confirmation"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "Requires understanding of the 'agents' framework",
-        "State transitions are defined in natural language, which could be brittle"
+        "deployment environment and deploy_url are not acquired when missing",
+        "artifact path is set but tarball creation is not specified",
+        "deploy and rollback commands are vague"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.3
     },
     {
       "candidate": "pydantic_ai",
       "case": "deploy_branch",
-      "fidelity": 10.0,
-      "notes": "The artifact provides a highly detailed and robust state machine that successfully covers every required success criterion.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"pydantic_ai\",\n  \"case\": \"deploy_branch\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Comprehensive failure handling (rollback/retry)\",\n    \"Directly addresses all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of Pydantic AI framework\",\n    \"Tool definitions are minimal (missing notification tool)\"\n  ],\n  \"notes\": \"The artifact provides a highly detailed and robust state machine that successfully covers every required success criterion.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 7.0,
+      "failure_recovery": 7.0,
+      "notes": "The artifact captures nearly all required workflow semantics in instructions, but several operational details and some failure branches are underspecified.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"pydantic_ai\",\"case\":\"deploy_branch\",\"task_success\":8,\"requirements_met\":8,\"failure_recovery\":7,\"consistency\":7,\"overall\":8,\"strengths\":[\"explicit branch prompt\",\"main deployment confirmation\",\"pre-build typecheck and coverage\",\"coverage threshold confirmation\",\"deployment rollback and notification\",\"health-check retries with rollback\"],\"weaknesses\":[\"environment and deploy_url acquisition are underspecified\",\"timestamped artifact creation is only described as setting a path\",\"tool commands for deploy rollback notify are vague\",\"rejected confirmations and failed checks have incomplete transitions\"],\"notes\":\"The artifact captures nearly all required workflow semantics in instructions, but several operational details and some failure branches are underspecified.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 17,
         "chars": 2756,
@@ -678,26 +695,27 @@
         "state_mentions": 14
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Comprehensive failure handling (rollback/retry)",
-        "Directly addresses all success criteria"
+        "explicit branch prompt",
+        "main deployment confirmation",
+        "pre-build typecheck and coverage"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "Requires understanding of Pydantic AI framework",
-        "Tool definitions are minimal (missing notification tool)"
+        "environment and deploy_url acquisition are underspecified",
+        "timestamped artifact creation is only described as setting a path",
+        "tool commands for deploy rollback notify are vague"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.75
     },
     {
       "candidate": "dspy",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "The artifact provides an excellent, highly detailed blueprint for the required workflow using a structured state machine approach.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"dspy\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 6,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria in detail\",\n    \"Uses a structured framework (DSPy)\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of DSPy/LM programming frameworks\",\n    \"The actual execution logic is abstracted away into LLM calls\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly detailed blueprint for the required workflow using a structured state machine approach.\"\n}",
-      "readability": 8.0,
-      "simplicity": 6.0,
+      "consistency": 4.0,
+      "failure_recovery": 3.0,
+      "notes": "The embedded workflow addresses most success criteria at a high level, but it relies on vague LLM state transitions and omits concrete Docker Compose handling.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"dspy\",\"case\":\"onboard_service\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":4,\"overall\":6,\"strengths\":[\"covers main interactive choices\",\"offers git confirmation\",\"creates core files and conditional stubs\"],\"weaknesses\":[\"Docker Compose files not specified\",\"kebab-case validation incomplete\",\"state execution and variable updates are ambiguous\",\"little failure or regeneration handling\"],\"notes\":\"The embedded workflow addresses most success criteria at a high level, but it relies on vague LLM state transitions and omits concrete Docker Compose handling.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 24,
         "chars": 3369,
@@ -706,26 +724,27 @@
         "state_mentions": 15
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria in detail",
-        "Uses a structured framework (DSPy)"
+        "covers main interactive choices",
+        "offers git confirmation",
+        "creates core files and conditional stubs"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "Requires understanding of DSPy/LM programming frameworks",
-        "The actual execution logic is abstracted away into LLM calls"
+        "Docker Compose files not specified",
+        "kebab-case validation incomplete",
+        "state execution and variable updates are ambiguous"
       ],
-      "weighted_overall": 8.15
+      "weighted_overall": 5.65
     },
     {
       "candidate": "ell",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "This artifact provides an excellent, highly detailed blueprint that covers all requirements using a robust state machine pattern.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"ell\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria in detail\",\n    \"Clear progression through setup steps\"\n  ],\n  \"weaknesses\": [\n    \"Relies heavily on a complex internal framework (ell)\",\n    \"The logic for enforcing kebab-case is described but not implemented in the provided code snippet.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly detailed blueprint that covers all requirements using a robust state machine pattern.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 4.0,
+      "notes": "The workflow captures most required interactions and scaffold actions, but misses Docker Compose file handling and relies on broad natural-language instructions for several critical generation details.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"candidate_10\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":7,\"failure_recovery\":4,\"consistency\":6,\"overall\":6,\"strengths\":[\"covers interactive service naming and stack choices\",\"supports required languages and custom runtime\",\"asks before git init\",\"creates core scaffold files and conditional stubs\"],\"weaknesses\":[\"kebab-case validation is incomplete\",\"Docker Compose-specific file generation is missing\",\"templates and local start commands are underspecified\",\"little recovery for failed tool calls or rejected/generated choices\"],\"notes\":\"The workflow captures most required interactions and scaffold actions, but misses Docker Compose file handling and relies on broad natural-language instructions for several critical generation details.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 25,
         "chars": 3126,
@@ -734,26 +753,27 @@
         "state_mentions": 17
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria in detail",
-        "Clear progression through setup steps"
+        "covers interactive service naming and stack choices",
+        "supports required languages and custom runtime",
+        "asks before git init"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies heavily on a complex internal framework (ell)",
-        "The logic for enforcing kebab-case is described but not implemented in the provided code snippet."
+        "kebab-case validation is incomplete",
+        "Docker Compose-specific file generation is missing",
+        "templates and local start commands are underspecified"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.45
     },
     {
       "candidate": "guidance",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "The artifact provides an excellent, highly structured plan that maps directly to all success criteria.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"guidance\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n  \"Covers all success criteria in detailed states\",\n  \"Clear flow control and branching logic defined\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a specific 'guidance' framework syntax\",\n    \"The loop structure is overly complex for simple sequential prompting\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly structured plan that maps directly to all success criteria.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 5.0,
+      "failure_recovery": 4.0,
+      "notes": "The artifact describes most required scaffolding behavior, but omits Docker Compose-specific output and relies on loose LM-selected actions and states rather than robust enforced control flow.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"candidate_08\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":4,\"consistency\":5,\"overall\":6,\"strengths\":[\"covers main interactive choices\",\"explicit git confirmation\",\"conditional database and messaging stubs\",\"local-run or summary terminal step\"],\"weaknesses\":[\"does not explicitly create Docker Compose files\",\"kebab-case validation is incomplete\",\"state transitions are weakly enforced\",\"little handling of failures or regeneration\"],\"notes\":\"The artifact describes most required scaffolding behavior, but omits Docker Compose-specific output and relies on loose LM-selected actions and states rather than robust enforced control flow.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 24,
         "chars": 3086,
@@ -762,26 +782,27 @@
         "state_mentions": 16
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria in detailed states",
-        "Clear flow control and branching logic defined"
+        "covers main interactive choices",
+        "explicit git confirmation",
+        "conditional database and messaging stubs"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies on a specific 'guidance' framework syntax",
-        "The loop structure is overly complex for simple sequential prompting"
+        "does not explicitly create Docker Compose files",
+        "kebab-case validation is incomplete",
+        "state transitions are weakly enforced"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.65
     },
     {
       "candidate": "langgraph",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "This artifact provides a highly structured and comprehensive blueprint for the required interactive scaffolding process.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"langgraph\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Structured workflow using LangGraph for clear state management.\",\n    \"Covers all success criteria through dedicated nodes and sequential flow.\",\n    \"Explicitly defines the entire interaction sequence.\"\n  ],\n  \"weaknesses\": [\n    \"The node functions are stubs, requiring significant implementation detail to function fully.\",\n    \"Relies on external tool definitions (ask, run, write_file) not shown in context.\"\n  ],\n  \"notes\": \"This artifact provides a highly structured and comprehensive blueprint for the required interactive scaffolding process.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 3.0,
+      "notes": "The workflow comments describe most required behavior, but Docker Compose handling and robust validation/recovery are underspecified.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"langgraph\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":6,\"overall\":6,\"strengths\":[\"covers main interactive choice flow\",\"supports required languages and custom runtime\",\"optional git initialization\",\"ends with local run or summary\"],\"weaknesses\":[\"no Docker Compose scaffold files specified\",\"kebab-case validation is incomplete\",\"deployment and HTTP choices are not explicitly stored\",\"little failure or retry handling\"],\"notes\":\"The workflow comments describe most required behavior, but Docker Compose handling and robust validation/recovery are underspecified.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 30,
         "chars": 3584,
@@ -790,26 +811,27 @@
         "state_mentions": 67
       },
       "strengths": [
-        "Structured workflow using LangGraph for clear state management.",
-        "Covers all success criteria through dedicated nodes and sequential flow.",
-        "Explicitly defines the entire interaction sequence."
+        "covers main interactive choice flow",
+        "supports required languages and custom runtime",
+        "optional git initialization"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "The node functions are stubs, requiring significant implementation detail to function fully.",
-        "Relies on external tool definitions (ask, run, write_file) not shown in context."
+        "no Docker Compose scaffold files specified",
+        "kebab-case validation is incomplete",
+        "deployment and HTTP choices are not explicitly stored"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.3
     },
     {
       "candidate": "llamaindex_workflows",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "This workflow provides a highly detailed, step-by-step plan that maps perfectly to the task requirements.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"llamaindex_workflows\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicitly covers all success criteria in a structured workflow.\",\n    \"Uses distinct steps for clear state management and user interaction.\"\n  ],\n  \"weaknesses\": [\n    \"Relies on an external framework (LlamaIndex) which adds complexity.\",\n    \"The actual implementation details of tool use are abstracted away by comments.\"\n  ],\n  \"notes\": \"This workflow provides a highly detailed, step-by-step plan that maps perfectly to the task requirements.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 3.0,
+      "notes": "The workflow would likely scaffold a useful service and satisfy most criteria, but Docker Compose handling and failure recovery are under-specified.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"llamaindex_workflows\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":3,\"consistency\":6,\"overall\":7,\"strengths\":[\"covers interactive service naming and language choices\",\"captures database messaging and deployment decisions\",\"prompts before git initialization\",\"creates README entrypoint and conditional stubs\"],\"weaknesses\":[\"omits Docker Compose-specific scaffold files\",\"HTTP framework selection is vague\",\"little recovery for failed scaffolding or rejected choices\",\"most behavior is high-level comments without concrete validation details\"],\"notes\":\"The workflow would likely scaffold a useful service and satisfy most criteria, but Docker Compose handling and failure recovery are under-specified.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 24,
         "chars": 3252,
@@ -818,25 +840,27 @@
         "state_mentions": 83
       },
       "strengths": [
-        "Explicitly covers all success criteria in a structured workflow.",
-        "Uses distinct steps for clear state management and user interaction."
+        "covers interactive service naming and language choices",
+        "captures database messaging and deployment decisions",
+        "prompts before git initialization"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies on an external framework (LlamaIndex) which adds complexity.",
-        "The actual implementation details of tool use are abstracted away by comments."
+        "omits Docker Compose-specific scaffold files",
+        "HTTP framework selection is vague",
+        "little recovery for failed scaffolding or rejected choices"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.6
     },
     {
       "candidate": "lmql",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "This artifact provides an excellent, highly structured workflow that systematically addresses all required steps and success criteria.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"lmql\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Covers all success criteria systematically\",\n    \"Clear flow control and variable management\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a specific LLM query language syntax (LMQL)\",\n    \"The 'scaffold' step is very dense, potentially leading to complex tool calls.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured workflow that systematically addresses all required steps and success criteria.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 3.0,
+      "notes": "The workflow addresses most required prompts and scaffolding steps, but misses Docker Compose handling and has weak validation and recovery semantics.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"lmql\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":6,\"overall\":6,\"strengths\":[\"covers main interactive states\",\"supports required runtime choices\",\"prompts before git init\",\"creates core README entrypoint and stubs\"],\"weaknesses\":[\"does not create Docker Compose files\",\"kebab-case validation is incomplete\",\"Helm choice is captured but not acted on\",\"little failure or invalid-input recovery\",\"tool/file semantics remain vague\"],\"notes\":\"The workflow addresses most required prompts and scaffolding steps, but misses Docker Compose handling and has weak validation and recovery semantics.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 25,
         "chars": 2801,
@@ -845,53 +869,56 @@
         "state_mentions": 11
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria systematically",
-        "Clear flow control and variable management"
+        "covers main interactive states",
+        "supports required runtime choices",
+        "prompts before git init"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies on a specific LLM query language syntax (LMQL)",
-        "The 'scaffold' step is very dense, potentially leading to complex tool calls."
+        "does not create Docker Compose files",
+        "kebab-case validation is incomplete",
+        "Helm choice is captured but not acted on"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.3
     },
     {
       "candidate": "mdscript",
       "case": "onboard_service",
-      "fidelity": 9.0,
-      "notes": "The artifact provides a highly readable, comprehensive plan that covers most success criteria but lacks strict enforcement and some minor detail.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"mdscript\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 10,\n  \"fidelity\": 9,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step flow matching the task structure\",\n    \"Explicitly handles required inputs and conditional file generation\"\n  ],\n  \"weaknesses\": [\n    \"Does not explicitly enforce kebab-case validation (only warns)\",\n    \"Missing explicit handling for custom runtimes in language selection\"\n  ],\n  \"notes\": \"The artifact provides a highly readable, comprehensive plan that covers most success criteria but lacks strict enforcement and some minor detail.\"\n}",
-      "readability": 10.0,
-      "simplicity": 10.0,
+      "consistency": 6.0,
+      "failure_recovery": 4.0,
+      "notes": "The workflow satisfies most high-level scaffolding requirements but misses Docker Compose handling and leaves several validations and conditional branches vague.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"mdscript\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":7,\"failure_recovery\":4,\"consistency\":6,\"overall\":7,\"strengths\":[\"covers interactive language and stack selection\",\"supports custom runtime\",\"asks before git initialization\",\"can run locally or print summary\"],\"weaknesses\":[\"Docker Compose-specific files are not scaffolded\",\"kebab-case validation only checks spaces and uppercase\",\"HTTP framework choice is underspecified\",\"none database or messaging conditions are ambiguous\",\"limited recovery for invalid choices or failed commands\"],\"notes\":\"The workflow satisfies most high-level scaffolding requirements but misses Docker Compose handling and leaves several validations and conditional branches vague.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 24,
-        "chars": 1688,
+        "chars": 1686,
         "dependency_markers": 2,
         "nonblank_lines": 35,
         "state_mentions": 0
       },
       "strengths": [
-        "Clear step-by-step flow matching the task structure",
-        "Explicitly handles required inputs and conditional file generation"
+        "covers interactive language and stack selection",
+        "supports custom runtime",
+        "asks before git initialization"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Does not explicitly enforce kebab-case validation (only warns)",
-        "Missing explicit handling for custom runtimes in language selection"
+        "Docker Compose-specific files are not scaffolded",
+        "kebab-case validation only checks spaces and uppercase",
+        "HTTP framework choice is underspecified"
       ],
-      "weighted_overall": 9.5
+      "weighted_overall": 6.45
     },
     {
       "candidate": "microsoft_agent_framework",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "The artifact provides an excellent, highly structured blueprint that meets all success criteria with high fidelity.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"microsoft_agent_framework\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 8,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Covers all required steps in a logical, sequential workflow.\",\n    \"Explicitly handles service naming (kebab-case), language choice, stack components, and deployment targets.\",\n    \"The scaffold step is comprehensive, covering README, entrypoints, stubs, and infrastructure files.\"\n  ],\n  \"weaknesses\": [\n    \"Requires knowledge of a specific agent framework syntax (`@workflow_step`, `AgentWorkflowBuilder`).\",\n    \"Does not explicitly show error handling or complex branching logic (e.g., if K8s is chosen, *then* ask for Helm).\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly structured blueprint that meets all success criteria with high fidelity.\"\n}",
-      "readability": 10.0,
-      "simplicity": 8.0,
+      "consistency": 6.0,
+      "failure_recovery": 3.0,
+      "notes": "The workflow semantically covers most onboarding steps, but misses Docker Compose-specific output and leaves several validations and recovery paths underspecified.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"candidate_04\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":6,\"overall\":7,\"strengths\":[\"covers main interactive choices\",\"offers git confirmation\",\"creates core scaffold artifacts\",\"branches for Kubernetes and Lambda\"],\"weaknesses\":[\"Docker Compose files not scaffolded\",\"kebab-case validation is incomplete\",\"HTTP framework choice is vague\",\"little failure or regeneration handling\"],\"notes\":\"The workflow semantically covers most onboarding steps, but misses Docker Compose-specific output and leaves several validations and recovery paths underspecified.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 29,
         "chars": 3013,
@@ -900,26 +927,27 @@
         "state_mentions": 19
       },
       "strengths": [
-        "Covers all required steps in a logical, sequential workflow.",
-        "Explicitly handles service naming (kebab-case), language choice, stack components, and deployment targets.",
-        "The scaffold step is comprehensive, covering README, entrypoints, stubs, and infrastructure files."
+        "covers main interactive choices",
+        "offers git confirmation",
+        "creates core scaffold artifacts"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Requires knowledge of a specific agent framework syntax (`@workflow_step`, `AgentWorkflowBuilder`).",
-        "Does not explicitly show error handling or complex branching logic (e.g., if K8s is chosen, *then* ask for Helm)."
+        "Docker Compose files not scaffolded",
+        "kebab-case validation is incomplete",
+        "HTTP framework choice is vague"
       ],
-      "weighted_overall": 9.15
+      "weighted_overall": 6.3
     },
     {
       "candidate": "openai_agents",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "This artifact provides an excellent, comprehensive blueprint using state management to meet all task requirements.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"openai_agents\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Highly structured state machine approach\",\n  \"Explicitly addresses all success criteria in the instructions\",\n  \"Uses defined tools for clear execution paths\"\n  ],\n  \"weaknesses\": [\n    \"Requires understanding of a specific agent framework (agents library)\",\n    \"The workflow logic is complex and dense within the instruction string\"\n  ],\n  \"notes\": \"This artifact provides an excellent, comprehensive blueprint using state management to meet all task requirements.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 7.0,
+      "failure_recovery": 5.0,
+      "notes": "The workflow captures most required decisions and scaffold steps, but misses explicit Docker Compose handling and leaves several implementation and recovery details vague.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"openai_agents\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":5,\"consistency\":7,\"overall\":7,\"strengths\":[\"covers interactive choices\",\"asks before git init\",\"conditional database and messaging stubs\",\"local run or summary branch\"],\"weaknesses\":[\"no Docker Compose file creation specified\",\"kebab-case validation incomplete\",\"file contents and dev commands underspecified\",\"limited recovery for existing files or tool failures\"],\"notes\":\"The workflow captures most required decisions and scaffold steps, but misses explicit Docker Compose handling and leaves several implementation and recovery details vague.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 24,
         "chars": 3192,
@@ -928,26 +956,27 @@
         "state_mentions": 9
       },
       "strengths": [
-        "Highly structured state machine approach",
-        "Explicitly addresses all success criteria in the instructions",
-        "Uses defined tools for clear execution paths"
+        "covers interactive choices",
+        "asks before git init",
+        "conditional database and messaging stubs"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Requires understanding of a specific agent framework (agents library)",
-        "The workflow logic is complex and dense within the instruction string"
+        "no Docker Compose file creation specified",
+        "kebab-case validation incomplete",
+        "file contents and dev commands underspecified"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.0
     },
     {
       "candidate": "pydantic_ai",
       "case": "onboard_service",
-      "fidelity": 10.0,
-      "notes": "This artifact provides an excellent, highly structured blueprint that directly addresses all success criteria with clear state transitions and tool usage.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"pydantic_ai\",\n  \"case\": \"onboard_service\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure is highly effective for complex workflows.\",\n    \"Covers all success criteria with dedicated states and logic.\",\n    \"Clear separation of concerns (e.g., language choice vs. deployment config).\"\n  ],\n  \"weaknesses\": [\n    \"The use of a specific framework (pydantic_ai) adds boilerplate knowledge.\",\n    \"Error handling for user input validation could be more robust.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured blueprint that directly addresses all success criteria with clear state transitions and tool usage.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 4.0,
+      "notes": "The workflow directly encodes most required interactions and scaffold actions, but misses Docker Compose-specific files and leaves validation and execution details somewhat underspecified.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"pydantic_ai\",\"case\":\"onboard_service\",\"task_success\":7,\"requirements_met\":7,\"failure_recovery\":4,\"consistency\":6,\"overall\":7,\"strengths\":[\"covers interactive choices\",\"offers git confirmation\",\"creates core scaffold files\",\"handles Kubernetes and Lambda branches\"],\"weaknesses\":[\"no Docker Compose file generation\",\"kebab-case validation is incomplete\",\"local dev command is unspecified\",\"limited recovery for invalid choices or failed commands\"],\"notes\":\"The workflow directly encodes most required interactions and scaffold actions, but misses Docker Compose-specific files and leaves validation and execution details somewhat underspecified.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 24,
         "chars": 3294,
@@ -956,26 +985,27 @@
         "state_mentions": 15
       },
       "strengths": [
-        "Explicit state machine structure is highly effective for complex workflows.",
-        "Covers all success criteria with dedicated states and logic.",
-        "Clear separation of concerns (e.g., language choice vs. deployment config)."
+        "covers interactive choices",
+        "offers git confirmation",
+        "creates core scaffold files"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "The use of a specific framework (pydantic_ai) adds boilerplate knowledge.",
-        "Error handling for user input validation could be more robust."
+        "no Docker Compose file generation",
+        "kebab-case validation is incomplete",
+        "local dev command is unspecified"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.45
     },
     {
       "candidate": "dspy",
       "case": "release_notes",
-      "fidelity": 9.0,
-      "notes": "The artifact successfully structures the required multi-step process but relies heavily on LLM reasoning for state transitions and lacks concrete tool calls.",
-      "overall": 7.0,
-      "performance": 8.0,
-      "raw_response": "{\n  \"candidate\": \"dspy\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 7,\n  \"simplicity\": 6,\n  \"fidelity\": 9,\n  \"overall\": 7,\n  \"strengths\": [\n    \"Explicitly models the multi-step workflow using states.\",\n    \"Handles regeneration context by looping back to 'Gather Changes'.\",\n    \"Uses a structured framework (dspy) for state management.\"\n  ],\n  \"weaknesses\": [\n    \"The core logic relies on an LLM's ability to correctly transition between defined states, which is brittle.\",\n    \"The `workflow` string contains all instructions and context, making it overly complex for a single prompt input.\",\n    \"It does not explicitly show the execution of shell commands (e.g., `git log`) or file writing.\"\n  ],\n  \"notes\": \"The artifact successfully structures the required multi-step process but relies heavily on LLM reasoning for state transitions and lacks concrete tool calls.\"\n}",
-      "readability": 7.0,
-      "simplicity": 6.0,
+      "consistency": 4.0,
+      "failure_recovery": 3.0,
+      "notes": "The workflow text captures most required behavior, but relies on vague LLM decisions without explicit tool calls, persisted outputs, or robust transitions.",
+      "overall": 5.0,
+      "raw_response": "{\"candidate\":\"dspy\",\"case\":\"release_notes\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":4,\"overall\":5,\"strengths\":[\"states cover core changelog flow\",\"explicit git range inference\",\"nonempty section rules included\"],\"weaknesses\":[\"no concrete command execution or state updates\",\"maintenance grouping overbroad\",\"regeneration path ambiguous\",\"terminal transition underspecified\"],\"notes\":\"The workflow text captures most required behavior, but relies on vague LLM decisions without explicit tool calls, persisted outputs, or robust transitions.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 5,
         "chars": 2304,
@@ -984,27 +1014,27 @@
         "state_mentions": 12
       },
       "strengths": [
-        "Explicitly models the multi-step workflow using states.",
-        "Handles regeneration context by looping back to 'Gather Changes'.",
-        "Uses a structured framework (dspy) for state management."
+        "states cover core changelog flow",
+        "explicit git range inference",
+        "nonempty section rules included"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "The core logic relies on an LLM's ability to correctly transition between defined states, which is brittle.",
-        "The `workflow` string contains all instructions and context, making it overly complex for a single prompt input.",
-        "It does not explicitly show the execution of shell commands (e.g., `git log`) or file writing."
+        "no concrete command execution or state updates",
+        "maintenance grouping overbroad",
+        "regeneration path ambiguous"
       ],
-      "weighted_overall": 7.4
+      "weighted_overall": 5.65
     },
     {
       "candidate": "ell",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "The artifact provides a highly structured state machine that explicitly addresses all success criteria, leading to high fidelity and performance.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"ell\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n  \"Covers all success criteria explicitly\",\n  \"Clear separation of concerns (gather, categorize, write)\"\n  ],\n  \"weaknesses\": [\n    \"Relies heavily on the specific 'ell' framework syntax\",\n    \"The logic for writing notes is complex and embedded in a single system prompt\"\n  ],\n  \"notes\": \"The artifact provides a highly structured state machine that explicitly addresses all success criteria, leading to high fidelity and performance.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 4.0,
+      "notes": "The workflow semantics are mostly sufficient for a capable agent to produce CHANGELOG.md, but several operational details and recovery paths are left vague.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"candidate_10\",\"case\":\"release_notes\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":4,\"consistency\":6,\"overall\":7,\"strengths\":[\"explicitly covers all main changelog states\",\"categorizes conventional prefixes\",\"writes only nonempty sections\",\"includes regeneration path\"],\"weaknesses\":[\"no concrete git commands for last tag inference or log format\",\"regeneration trigger is underspecified\",\"little handling for missing tags or git failures\",\"terminal state transition is ambiguous\"],\"notes\":\"The workflow semantics are mostly sufficient for a capable agent to produce CHANGELOG.md, but several operational details and recovery paths are left vague.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 6,
         "chars": 2063,
@@ -1013,26 +1043,27 @@
         "state_mentions": 14
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Covers all success criteria explicitly",
-        "Clear separation of concerns (gather, categorize, write)"
+        "explicitly covers all main changelog states",
+        "categorizes conventional prefixes",
+        "writes only nonempty sections"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies heavily on the specific 'ell' framework syntax",
-        "The logic for writing notes is complex and embedded in a single system prompt"
+        "no concrete git commands for last tag inference or log format",
+        "regeneration trigger is underspecified",
+        "little handling for missing tags or git failures"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.75
     },
     {
       "candidate": "guidance",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "This artifact provides an excellent, highly structured workflow that explicitly addresses all success criteria using a state machine pattern.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"guidance\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Clear separation of concerns (gather, categorize, generate)\",\n    \"High fidelity to all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"Relies on a specific 'guidance' framework knowledge\",\n    \"The loop structure might be overly complex for simple sequential steps\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured workflow that explicitly addresses all success criteria using a state machine pattern.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 6.0,
+      "failure_recovery": 4.0,
+      "notes": "The artifact states most required behavior clearly enough for a capable agent, but relies on free-form action generation and has limited recovery or deterministic control.",
+      "overall": 7.0,
+      "raw_response": "{\"candidate\":\"candidate_08\",\"case\":\"release_notes\",\"task_success\":7,\"requirements_met\":8,\"failure_recovery\":4,\"consistency\":6,\"overall\":7,\"strengths\":[\"covers main workflow states\",\"infers missing git range\",\"uses git log\",\"writes only nonempty sections\",\"mentions regeneration path\"],\"weaknesses\":[\"state transitions are weakly enforced\",\"maintenance grouping is overly broad\",\"no concrete git commands or error handling\",\"regeneration support is underspecified\"],\"notes\":\"The artifact states most required behavior clearly enough for a capable agent, but relies on free-form action generation and has limited recovery or deterministic control.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 5,
         "chars": 1986,
@@ -1041,26 +1072,27 @@
         "state_mentions": 13
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Clear separation of concerns (gather, categorize, generate)",
-        "High fidelity to all success criteria"
+        "covers main workflow states",
+        "infers missing git range",
+        "uses git log"
       ],
+      "task_success": 7.0,
       "weaknesses": [
-        "Relies on a specific 'guidance' framework knowledge",
-        "The loop structure might be overly complex for simple sequential steps"
+        "state transitions are weakly enforced",
+        "maintenance grouping is overly broad",
+        "no concrete git commands or error handling"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 6.75
     },
     {
       "candidate": "langgraph",
       "case": "release_notes",
-      "fidelity": 9.0,
-      "notes": "The workflow design is highly structured and addresses most criteria, though the actual execution logic within nodes needs to be robustly defined for perfect performance.",
-      "overall": 8.0,
-      "performance": 8.0,
-      "raw_response": "{\n  \"candidate\": \"langgraph\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 6,\n  \"fidelity\": 9,\n  \"overall\": 8,\n  \"strengths\": [\n    \"Clear separation of concerns into distinct nodes (gather, categorize, generate)\",\n    \"Explicit state management handles data flow well\",\n    \"Structure naturally supports regeneration/re-running steps\"\n  ],\n  \"weaknesses\": [\n    \"The implementation details for tool use (git log, file writing) are abstracted away and not shown.\",\n    \"Regeneration logic is described in comments but not fully implemented in the graph structure.\"\n  ],\n  \"notes\": \"The workflow design is highly structured and addresses most criteria, though the actual execution logic within nodes needs to be robustly defined for perfect performance.\"\n}",
-      "readability": 9.0,
-      "simplicity": 6.0,
+      "consistency": 5.0,
+      "failure_recovery": 2.0,
+      "notes": "The comments express most core requirements, but the executable workflow is linear and does not actually support the stated regeneration loop or robust failure handling.",
+      "overall": 5.0,
+      "raw_response": "{\"candidate\":\"langgraph\",\"case\":\"release_notes\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":2,\"consistency\":5,\"overall\":5,\"strengths\":[\"states core changelog steps\",\"explicit last-tag range inference\",\"nonempty section rule included\"],\"weaknesses\":[\"regeneration path contradicted by graph edge to END\",\"no concrete git commands or file content construction\",\"maintenance categorization is overbroad\"],\"notes\":\"The comments express most core requirements, but the executable workflow is linear and does not actually support the stated regeneration loop or robust failure handling.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 8,
         "chars": 2074,
@@ -1069,26 +1101,27 @@
         "state_mentions": 37
       },
       "strengths": [
-        "Clear separation of concerns into distinct nodes (gather, categorize, generate)",
-        "Explicit state management handles data flow well",
-        "Structure naturally supports regeneration/re-running steps"
+        "states core changelog steps",
+        "explicit last-tag range inference",
+        "nonempty section rule included"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "The implementation details for tool use (git log, file writing) are abstracted away and not shown.",
-        "Regeneration logic is described in comments but not fully implemented in the graph structure."
+        "regeneration path contradicted by graph edge to END",
+        "no concrete git commands or file content construction",
+        "maintenance categorization is overbroad"
       ],
-      "weighted_overall": 7.9
+      "weighted_overall": 5.6
     },
     {
       "candidate": "llamaindex_workflows",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "The workflow structure perfectly maps the required steps, achieving high fidelity despite lacking concrete execution code.",
-      "overall": 9.0,
-      "performance": 8.0,
-      "raw_response": "{\n  \"candidate\": \"llamaindex_workflows\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step process matching the task flow\",\n  \"Explicit state management for context preservation\",\n  \"High fidelity to all success criteria\"\n  ],\n  \"weaknesses\": [\n    \"The artifact is a skeleton and lacks implementation details (e.g., actual git log calls, parsing logic)\",\n    \"State passing relies on manual dictionary copying which could be brittle in a real system\"\n  ],\n  \"notes\": \"The workflow structure perfectly maps the required steps, achieving high fidelity despite lacking concrete execution code.\"\n}",
-      "readability": 9.0,
-      "simplicity": 7.0,
+      "consistency": 5.0,
+      "failure_recovery": 3.0,
+      "notes": "The artifact describes enough for a capable agent to produce a basic changelog, but key behavior is underspecified or not represented in actual workflow transitions.",
+      "overall": 6.0,
+      "raw_response": "{\"candidate\":\"llamaindex_workflows\",\"case\":\"release_notes\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":5,\"overall\":6,\"strengths\":[\"covers main happy-path steps\",\"explicit nonempty section rule\",\"preserves state dict between steps\"],\"weaknesses\":[\"tool actions are only comments\",\"regeneration branch is not implemented\",\"maintenance grouping is broad rather than prefix-based\",\"no handling for missing tags or git failures\"],\"notes\":\"The artifact describes enough for a capable agent to produce a basic changelog, but key behavior is underspecified or not represented in actual workflow transitions.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 5,
         "chars": 1765,
@@ -1097,26 +1130,27 @@
         "state_mentions": 47
       },
       "strengths": [
-        "Clear step-by-step process matching the task flow",
-        "Explicit state management for context preservation",
-        "High fidelity to all success criteria"
+        "covers main happy-path steps",
+        "explicit nonempty section rule",
+        "preserves state dict between steps"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "The artifact is a skeleton and lacks implementation details (e.g., actual git log calls, parsing logic)",
-        "State passing relies on manual dictionary copying which could be brittle in a real system"
+        "tool actions are only comments",
+        "regeneration branch is not implemented",
+        "maintenance grouping is broad rather than prefix-based"
       ],
-      "weighted_overall": 8.3
+      "weighted_overall": 5.75
     },
     {
       "candidate": "lmql",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "The artifact is highly structured and covers all requirements, making it very effective despite its domain-specific language.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"lmql\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure\",\n    \"Directly addresses all success criteria\",\n    \"Clear flow control for regeneration\"\n  ],\n  \"weaknesses\": [\n    \"Relies on specialized LMQL syntax (high barrier to entry)\",\n    \"Assumes perfect execution of shell commands within states\"\n  ],\n  \"notes\": \"The artifact is highly structured and covers all requirements, making it very effective despite its domain-specific language.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 7.0,
+      "failure_recovery": 5.0,
+      "notes": "The artifact directly encodes the requested changelog workflow and should usually succeed, but relies on the agent to fill in git command details and lacks robust failure handling.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"lmql\",\"case\":\"release_notes\",\"task_success\":8,\"requirements_met\":9,\"failure_recovery\":5,\"consistency\":7,\"overall\":8,\"strengths\":[\"covers all main workflow states\",\"explicit git range inference\",\"explicit nonempty changelog sections\",\"regeneration path included\"],\"weaknesses\":[\"tool commands are not specified\",\"little handling for missing tags or git failures\",\"regeneration transition is somewhat ambiguous\"],\"notes\":\"The artifact directly encodes the requested changelog workflow and should usually succeed, but relies on the agent to fill in git command details and lacks robust failure handling.\"}",
+      "requirements_met": 9.0,
       "static_metrics": {
         "branch_markers": 6,
         "chars": 1699,
@@ -1125,26 +1159,27 @@
         "state_mentions": 8
       },
       "strengths": [
-        "Explicit state machine structure",
-        "Directly addresses all success criteria",
-        "Clear flow control for regeneration"
+        "covers all main workflow states",
+        "explicit git range inference",
+        "explicit nonempty changelog sections"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "Relies on specialized LMQL syntax (high barrier to entry)",
-        "Assumes perfect execution of shell commands within states"
+        "tool commands are not specified",
+        "little handling for missing tags or git failures",
+        "regeneration transition is somewhat ambiguous"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.75
     },
     {
       "candidate": "mdscript",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "The artifact is highly effective, providing a clear and comprehensive state machine that meets all success criteria with minimal complexity.",
-      "overall": 9.0,
-      "performance": 8.0,
-      "raw_response": "{\n  \"candidate\": \"mdscript\",\n  \"case\": \"release_notes\",\n  \"performance\": 8,\n  \"readability\": 9,\n  \"simplicity\": 9,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step process flow\",\n    \"Explicitly handles all success criteria\",\n    \"Simple markdown structure for a state machine\"\n  ],\n  \"weaknesses\": [\n    \"Assumes perfect execution of internal variables (e.g., `features`, `fixes`)\",\n    \"Lacks explicit error handling or tool-use instructions beyond the initial git log call\"\n  ],\n  \"notes\": \"The artifact is highly effective, providing a clear and comprehensive state machine that meets all success criteria with minimal complexity.\"\n}",
-      "readability": 9.0,
-      "simplicity": 9.0,
+      "consistency": 8.0,
+      "failure_recovery": 6.0,
+      "notes": "The workflow directly covers the main changelog generation path, but its categorization and recovery semantics are somewhat underspecified.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"mdscript\",\"case\":\"release_notes\",\"task_success\":8,\"requirements_met\":8,\"failure_recovery\":6,\"consistency\":8,\"overall\":8,\"strengths\":[\"explicit git range inference\",\"uses git log\",\"nonempty sections only\",\"regeneration loop included\"],\"weaknesses\":[\"no exact last-tag command or no-tag handling\",\"prefix matching may miss scoped conventional commits\",\"limited failure handling\"],\"notes\":\"The workflow directly covers the main changelog generation path, but its categorization and recovery semantics are somewhat underspecified.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 5,
         "chars": 821,
@@ -1153,26 +1188,27 @@
         "state_mentions": 0
       },
       "strengths": [
-        "Clear step-by-step process flow",
-        "Explicitly handles all success criteria",
-        "Simple markdown structure for a state machine"
+        "explicit git range inference",
+        "uses git log",
+        "nonempty sections only"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "Assumes perfect execution of internal variables (e.g., `features`, `fixes`)",
-        "Lacks explicit error handling or tool-use instructions beyond the initial git log call"
+        "no exact last-tag command or no-tag handling",
+        "prefix matching may miss scoped conventional commits",
+        "limited failure handling"
       ],
-      "weighted_overall": 8.8
+      "weighted_overall": 7.7
     },
     {
       "candidate": "microsoft_agent_framework",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "The artifact provides a highly readable and logically sound workflow that directly maps to all success criteria.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"microsoft_agent_framework\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 10,\n  \"simplicity\": 8,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Clear step-by-step workflow structure\",\n    \"Explicitly addresses all success criteria in comments\",\n    \"Uses a structured framework for maintainability\"\n  ],\n  \"weaknesses\": [\n    \"Relies on assumed internal state management (ctx.state)\",\n    \"The transition logic is linear and lacks explicit error handling.\"\n  ],\n  \"notes\": \"The artifact provides a highly readable and logically sound workflow that directly maps to all success criteria.\"\n}",
-      "readability": 10.0,
-      "simplicity": 8.0,
+      "consistency": 5.0,
+      "failure_recovery": 3.0,
+      "notes": "The comments describe most core behavior, but the executable workflow state transitions and regeneration support are incomplete and some categorization semantics are imprecise.",
+      "overall": 5.0,
+      "raw_response": "{\"candidate\":\"candidate_04\",\"case\":\"release_notes\",\"task_success\":6,\"requirements_met\":7,\"failure_recovery\":3,\"consistency\":5,\"overall\":5,\"strengths\":[\"mentions inferring missing git_range\",\"specifies git log collection\",\"specifies nonempty changelog sections\"],\"weaknesses\":[\"categorizes all unmatched commits as maintenance rather than conventional maintenance prefixes\",\"regeneration path conflicts with terminal workflow graph\",\"no explicit handling for no tags or git failures\"],\"notes\":\"The comments describe most core behavior, but the executable workflow state transitions and regeneration support are incomplete and some categorization semantics are imprecise.\"}",
+      "requirements_met": 7.0,
       "static_metrics": {
         "branch_markers": 7,
         "chars": 1603,
@@ -1181,26 +1217,27 @@
         "state_mentions": 10
       },
       "strengths": [
-        "Clear step-by-step workflow structure",
-        "Explicitly addresses all success criteria in comments",
-        "Uses a structured framework for maintainability"
+        "mentions inferring missing git_range",
+        "specifies git log collection",
+        "specifies nonempty changelog sections"
       ],
+      "task_success": 6.0,
       "weaknesses": [
-        "Relies on assumed internal state management (ctx.state)",
-        "The transition logic is linear and lacks explicit error handling."
+        "categorizes all unmatched commits as maintenance rather than conventional maintenance prefixes",
+        "regeneration path conflicts with terminal workflow graph",
+        "no explicit handling for no tags or git failures"
       ],
-      "weighted_overall": 9.15
+      "weighted_overall": 5.75
     },
     {
       "candidate": "openai_agents",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "The artifact provides an excellent, highly structured plan that maps perfectly to the task requirements.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"openai_agents\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine structure (Gather -> Categorize -> Generate)\",\n    \"Directly addresses all success criteria in the instructions\",\n    \"Uses function tools for clear execution steps\"\n  ],\n  \"weaknesses\": [\n    \"Relies heavily on a specific, complex agent framework syntax\",\n    \"The internal logic of state transitions is abstract and not executable code\"\n  ],\n  \"notes\": \"The artifact provides an excellent, highly structured plan that maps perfectly to the task requirements.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 7.0,
+      "failure_recovery": 5.0,
+      "notes": "The artifact directly encodes most required behavior and a capable agent would likely complete the changelog, but some command details, conventional prefix matching, and recovery/regeneration semantics are incomplete.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"openai_agents\",\"case\":\"release_notes\",\"task_success\":8,\"requirements_met\":8,\"failure_recovery\":5,\"consistency\":7,\"overall\":8,\"strengths\":[\"explicit state workflow\",\"infers missing git range\",\"uses git log and writes CHANGELOG.md\",\"nonempty sections specified\",\"regeneration path mentioned\"],\"weaknesses\":[\"no exact commands for last tag or git log format\",\"scoped conventional commits like feat(scope): may be missed\",\"maintenance grouping is a catchall rather than prefix-based\",\"regeneration prompt and failure handling are underspecified\"],\"notes\":\"The artifact directly encodes most required behavior and a capable agent would likely complete the changelog, but some command details, conventional prefix matching, and recovery/regeneration semantics are incomplete.\"}",
+      "requirements_met": 8.0,
       "static_metrics": {
         "branch_markers": 5,
         "chars": 2108,
@@ -1209,26 +1246,27 @@
         "state_mentions": 6
       },
       "strengths": [
-        "Explicit state machine structure (Gather -> Categorize -> Generate)",
-        "Directly addresses all success criteria in the instructions",
-        "Uses function tools for clear execution steps"
+        "explicit state workflow",
+        "infers missing git range",
+        "uses git log and writes CHANGELOG.md"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "Relies heavily on a specific, complex agent framework syntax",
-        "The internal logic of state transitions is abstract and not executable code"
+        "no exact commands for last tag or git log format",
+        "scoped conventional commits like feat(scope): may be missed",
+        "maintenance grouping is a catchall rather than prefix-based"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.45
     },
     {
       "candidate": "pydantic_ai",
       "case": "release_notes",
-      "fidelity": 10.0,
-      "notes": "This artifact provides an excellent, highly structured workflow using explicit state management and tool definitions that directly map to the required task steps.",
-      "overall": 9.0,
-      "performance": 9.0,
-      "raw_response": "{\n  \"candidate\": \"pydantic_ai\",\n  \"case\": \"release_notes\",\n  \"performance\": 9,\n  \"readability\": 8,\n  \"simplicity\": 7,\n  \"fidelity\": 10,\n  \"overall\": 9,\n  \"strengths\": [\n    \"Explicit state machine design (WorkflowState)\",\n  \"Clear separation of concerns into distinct states\",\n  \"High fidelity to all success criteria listed in the task description\"\n  ],\n  \"weaknesses\": [\n    \"Requires knowledge of a specific framework (pydantic_ai)\",\n    \"The use of abstract tools (`...`) makes execution flow hard to trace without implementation details.\"\n  ],\n  \"notes\": \"This artifact provides an excellent, highly structured workflow using explicit state management and tool definitions that directly map to the required task steps.\"\n}",
-      "readability": 8.0,
-      "simplicity": 7.0,
+      "consistency": 7.0,
+      "failure_recovery": 5.0,
+      "notes": "The artifact clearly encodes the required changelog workflow, but leaves command details and failure branches to the agent.",
+      "overall": 8.0,
+      "raw_response": "{\"candidate\":\"pydantic_ai\",\"case\":\"release_notes\",\"task_success\":8,\"requirements_met\":9,\"failure_recovery\":5,\"consistency\":7,\"overall\":8,\"strengths\":[\"explicit state workflow\",\"covers all core changelog requirements\",\"nonempty section rule included\",\"regeneration path preserves context\"],\"weaknesses\":[\"shell commands are not specified\",\"no handling for missing tags or git failures\",\"regeneration trigger is underspecified\",\"state transitions rely on instructions only\"],\"notes\":\"The artifact clearly encodes the required changelog workflow, but leaves command details and failure branches to the agent.\"}",
+      "requirements_met": 9.0,
       "static_metrics": {
         "branch_markers": 5,
         "chars": 2229,
@@ -1237,116 +1275,118 @@
         "state_mentions": 12
       },
       "strengths": [
-        "Explicit state machine design (WorkflowState)",
-        "Clear separation of concerns into distinct states",
-        "High fidelity to all success criteria listed in the task description"
+        "explicit state workflow",
+        "covers all core changelog requirements",
+        "nonempty section rule included"
       ],
+      "task_success": 8.0,
       "weaknesses": [
-        "Requires knowledge of a specific framework (pydantic_ai)",
-        "The use of abstract tools (`...`) makes execution flow hard to trace without implementation details."
+        "shell commands are not specified",
+        "no handling for missing tags or git failures",
+        "regeneration trigger is underspecified"
       ],
-      "weighted_overall": 8.4
+      "weighted_overall": 7.75
     }
   ],
-  "started_at": "2026-06-16T14:39:48+00:00",
+  "started_at": "2026-06-16T16:14:15+00:00",
   "summary": {
     "candidate_summary": {
       "dspy": {
-        "fidelity": 9.67,
+        "consistency": 4.0,
+        "failure_recovery": 3.67,
         "name": "DSPy",
-        "overall": 7.82,
-        "performance": 8.67,
-        "readability": 7.33,
-        "simplicity": 6.0
+        "overall": 5.7,
+        "requirements_met": 7.33,
+        "task_success": 5.67
       },
       "ell": {
-        "fidelity": 10.0,
+        "consistency": 6.0,
+        "failure_recovery": 5.0,
         "name": "ell",
-        "overall": 8.4,
-        "performance": 9.0,
-        "readability": 8.0,
-        "simplicity": 7.0
+        "overall": 6.8,
+        "requirements_met": 7.67,
+        "task_success": 7.0
       },
       "guidance": {
-        "fidelity": 10.0,
+        "consistency": 5.67,
+        "failure_recovery": 5.0,
         "name": "Guidance",
-        "overall": 8.4,
-        "performance": 9.0,
-        "readability": 8.0,
-        "simplicity": 7.0
+        "overall": 7.02,
+        "requirements_met": 8.0,
+        "task_success": 7.33
       },
       "langgraph": {
-        "fidelity": 9.67,
+        "consistency": 5.0,
+        "failure_recovery": 3.0,
         "name": "LangGraph",
-        "overall": 8.23,
-        "performance": 8.67,
-        "readability": 8.33,
-        "simplicity": 6.67
+        "overall": 5.75,
+        "requirements_met": 7.0,
+        "task_success": 6.0
       },
       "llamaindex_workflows": {
-        "fidelity": 10.0,
+        "consistency": 5.33,
+        "failure_recovery": 3.67,
         "name": "LlamaIndex Workflows",
-        "overall": 8.37,
-        "performance": 8.67,
-        "readability": 8.33,
-        "simplicity": 7.0
+        "overall": 6.13,
+        "requirements_met": 7.33,
+        "task_success": 6.33
       },
       "lmql": {
-        "fidelity": 10.0,
+        "consistency": 6.67,
+        "failure_recovery": 5.0,
         "name": "LMQL",
-        "overall": 8.4,
-        "performance": 9.0,
-        "readability": 8.0,
-        "simplicity": 7.0
+        "overall": 7.37,
+        "requirements_met": 8.33,
+        "task_success": 7.67
       },
       "mdscript": {
-        "fidelity": 9.67,
+        "consistency": 7.33,
+        "failure_recovery": 5.67,
         "name": "MDScript",
-        "overall": 9.23,
-        "performance": 8.67,
-        "readability": 9.67,
-        "simplicity": 9.33
+        "overall": 7.33,
+        "requirements_met": 7.67,
+        "task_success": 7.67
       },
       "microsoft_agent_framework": {
-        "fidelity": 9.33,
+        "consistency": 5.67,
+        "failure_recovery": 4.0,
         "name": "Microsoft Agent Framework",
-        "overall": 8.77,
-        "performance": 8.67,
-        "readability": 9.67,
-        "simplicity": 7.67
+        "overall": 6.37,
+        "requirements_met": 7.33,
+        "task_success": 6.67
       },
       "openai_agents": {
-        "fidelity": 10.0,
+        "consistency": 6.67,
+        "failure_recovery": 5.33,
         "name": "OpenAI Agents SDK",
-        "overall": 8.4,
-        "performance": 9.0,
-        "readability": 8.0,
-        "simplicity": 7.0
+        "overall": 6.92,
+        "requirements_met": 7.67,
+        "task_success": 7.0
       },
       "pydantic_ai": {
-        "fidelity": 10.0,
+        "consistency": 6.67,
+        "failure_recovery": 5.33,
         "name": "Pydantic AI",
-        "overall": 8.4,
-        "performance": 9.0,
-        "readability": 8.0,
-        "simplicity": 7.0
+        "overall": 7.32,
+        "requirements_met": 8.0,
+        "task_success": 7.67
       }
     },
     "case_winners": {
       "deploy_branch": {
-        "candidate": "mdscript",
-        "name": "MDScript",
-        "score": 9.4
+        "candidate": "lmql",
+        "name": "LMQL",
+        "score": 8.05
       },
       "onboard_service": {
-        "candidate": "mdscript",
-        "name": "MDScript",
-        "score": 9.5
+        "candidate": "openai_agents",
+        "name": "OpenAI Agents SDK",
+        "score": 7.0
       },
       "release_notes": {
-        "candidate": "microsoft_agent_framework",
-        "name": "Microsoft Agent Framework",
-        "score": 9.15
+        "candidate": "lmql",
+        "name": "LMQL",
+        "score": 7.75
       }
     }
   },

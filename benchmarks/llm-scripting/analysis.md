@@ -2,74 +2,69 @@
 
 This analysis is based on `benchmarks/llm-scripting/results/latest.json`, generated with OpenAI `gpt-5.5` using `--blind-labels` at temperature `0`.
 
-## Frontier Judge Result
+## Outcome Judge Result
 
-`gpt-5.5` completed all 30 blinded judgments with zero parse failures.
+`gpt-5.5` completed all 30 blinded judgments with zero parse failures. The rubric scores expected task outcomes, not readability or simplicity as independent virtues.
 
-| Rank | System | Overall | Performance | Readability | Simplicity | Fidelity |
+| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | MDScript | 8.57 | 7.67 | 9.00 | 9.33 | 8.67 |
-| 2 | LMQL | 7.62 | 6.67 | 8.33 | 8.00 | 8.00 |
-| 3 | OpenAI Agents SDK | 7.57 | 6.67 | 8.33 | 8.00 | 7.67 |
-| 4 | Pydantic AI | 7.28 | 6.33 | 8.00 | 7.67 | 7.67 |
-| 5 | Microsoft Agent Framework | 6.53 | 4.33 | 7.67 | 8.00 | 7.33 |
-| 6 | Guidance | 6.48 | 5.00 | 7.67 | 6.67 | 7.67 |
-| 7 | ell | 6.23 | 4.67 | 7.33 | 6.67 | 7.33 |
-| 8 | LlamaIndex Workflows | 6.03 | 4.00 | 7.33 | 7.00 | 7.00 |
-| 9 | LangGraph | 5.70 | 3.33 | 7.67 | 6.67 | 6.33 |
-| 10 | DSPy | 5.15 | 3.00 | 6.67 | 5.33 | 7.33 |
+| 1 | LMQL | 7.37 | 7.67 | 8.33 | 5.00 | 6.67 |
+| 2 | MDScript | 7.33 | 7.67 | 7.67 | 5.67 | 7.33 |
+| 3 | Pydantic AI | 7.32 | 7.67 | 8.00 | 5.33 | 6.67 |
+| 4 | Guidance | 7.02 | 7.33 | 8.00 | 5.00 | 5.67 |
+| 5 | OpenAI Agents SDK | 6.92 | 7.00 | 7.67 | 5.33 | 6.67 |
+| 6 | ell | 6.80 | 7.00 | 7.67 | 5.00 | 6.00 |
+| 7 | Microsoft Agent Framework | 6.37 | 6.67 | 7.33 | 4.00 | 5.67 |
+| 8 | LlamaIndex Workflows | 6.13 | 6.33 | 7.33 | 3.67 | 5.33 |
+| 9 | LangGraph | 5.75 | 6.00 | 7.00 | 3.00 | 5.00 |
+| 10 | DSPy | 5.70 | 5.67 | 7.33 | 3.67 | 4.00 |
 
 Case winners:
 
-- `release_notes`: MDScript, 8.90.
-- `deploy_branch`: MDScript, 8.65.
-- `onboard_service`: MDScript, 8.15.
+- `release_notes`: LMQL, 7.75.
+- `deploy_branch`: LMQL, 8.05.
+- `onboard_service`: OpenAI Agents SDK, 7.00.
 
 ## Interpretation
 
-The frontier judge still preferred MDScript after candidate-name masking and a representation-level rubric. The reason was not raw feature depth; it was that MDScript expressed state, branches, and required user/tool actions with less indirection than the framework-style artifacts.
+Under the outcome rubric, MDScript no longer "crushes" every alternative. It ranks second overall, 0.04 behind LMQL and 0.01 ahead of Pydantic AI. That is the more credible result: MDScript is highly competitive on expected task outcome while remaining much lighter than the framework-style approaches.
 
-MDScript's best dimensions were readability and simplicity. The judge consistently noted clear staged workflows and easy-to-follow state transitions. Its lower performance and fidelity scores came from underspecified details in the specific benchmark scripts: exact git commands, artifact archive creation, Docker Compose-specific scaffolding, strict kebab-case enforcement, and explicit stop paths when a user declines confirmation. That is not a critique of the MDScript spec being freeform; it is a critique of how much determinism a workflow author chose to put into one particular script.
+The judge rated MDScript equal to LMQL and Pydantic AI on average task success, and highest on average consistency. Its weaker dimension was requirements met, especially on the `onboard_service` case, where the benchmark script did not explicitly scaffold Docker Compose files or fully specify several validation branches.
 
-LMQL and OpenAI Agents SDK formed the strongest second tier. Both kept the workflow readable and compact, but the judge found more reliance on model interpretation for concrete tool use and state persistence. Pydantic AI followed closely with stronger typing but more boilerplate and still-vague operational behavior in the rendered artifact.
+LMQL ranked first because the outcome judge saw it as likely to satisfy more explicit success criteria in the release-notes and deploy cases. OpenAI Agents SDK won the onboarding case, likely because its instruction/tool framing gave the judge more confidence that an agent would carry out the broad scaffold workflow.
 
-The graph/workflow frameworks scored lower in this representation-level test because their benchmark artifacts read as framework skeletons with natural-language workflow semantics layered into comments or instruction strings. The revised rubric counts those comments as semantics, but the judge still penalized them when state transitions and concrete actions were not as directly represented as MDScript bullets and links.
+The heavier graph/workflow frameworks still ranked lower in this representation-level fixture. That should not be overclaimed. The benchmark artifacts for those systems are generated skeletons, not hand-optimized production LangGraph or LlamaIndex implementations. A runtime execution benchmark that actually uses typed state, checkpoints, traces, retries, and parallel branches could produce a different ranking.
 
-DSPy came last because it is not primarily a workflow scripting language. It can optimize language-model behavior, but this task asks for long-horizon operational workflow expression.
+## What Changed
 
-## Local Stress Result
+The previous rubric mixed outcome with readability and simplicity, which made the benchmark look too much like a test of MDScript's design goals. The fixed rubric removes those as direct scoring categories.
 
-The earlier small-model stress run used local Ollama `gemma4:e4b` and also completed all 30 judgments with zero parse failures. It ranked MDScript first at 9.23 overall, ahead of Microsoft Agent Framework at 8.77.
+Current overall score:
 
-That local result is still useful, but it should be framed differently: it tests whether a weaker model can read and score the workflow artifacts. The `gpt-5.5` blinded run is the stronger publication candidate for judge quality.
+```text
+0.45 task_success + 0.30 requirements_met + 0.15 failure_recovery + 0.10 consistency
+```
 
-## MDScript Strengths
+Readability, simplicity, debuggability, and framework feature depth now matter only when the judge thinks they improve or harm the expected task result.
 
-- Very low ceremony: state headings, variables, links, and natural language.
-- Strong human reviewability in plain Markdown.
-- Good fit for repository-owned workflows where the host coding agent provides execution.
-- Clear enough for both a small local judge and a frontier judge to track long-horizon state and branch requirements.
+## MDScript Takeaway
 
-## MDScript Weaknesses
+The stronger claim is:
 
-- No static type checking, schema validation, or tool contract enforcement.
-- Branches and loops are understandable, but not mechanically enforced by a runtime.
-- Runtime behavior depends on the host agent actually executing the instructions.
-- Operational detail is script-author controlled. The language can stay freeform, but a workflow that needs reproducible behavior should include enough natural-language detail for the host agent to act consistently.
-- It is weaker than graph frameworks for durable execution, checkpointing, observability, retries, and multi-agent coordination.
+> In a blinded, outcome-focused LLM-as-judge benchmark of repository workflow artifacts, MDScript was statistically close to the top result and ranked second overall while using a much lighter representation than most alternatives.
 
-## Publishable Claim
+That is less flashy than "MDScript crushes everything," but it is much more publishable.
 
-The strongest defensible claim is:
+## Limits
 
-> In representation-level LLM workflow authoring tasks, MDScript produced artifacts that frontier and small local judges rated as more readable and simpler than framework-style alternatives while preserving comparable task fidelity.
-
-Do not claim that MDScript is a better runtime framework than LangGraph, LlamaIndex Workflows, Microsoft Agent Framework, OpenAI Agents SDK, or Pydantic AI. Those systems offer execution infrastructure that this benchmark intentionally does not exercise.
+- This is still a judge benchmark, not a real execution benchmark.
+- It estimates expected task outcomes rather than measuring completed files/actions in a sandbox.
+- It compares generated representations, not best-effort expert implementations for each framework.
+- It does not yet measure real 100-run consistency, wall-clock time, token cost, trace quality, or human intervention rate.
 
 ## Next Improvements
 
-- Add an executor benchmark where the same small model must actually follow each artifact in a sandbox and produce files.
-- Add pairwise judging in addition to scalar scoring to reduce score calibration artifacts.
-- Add a second frontier judge from another provider to reduce single-model judge bias.
-- Strengthen all candidate artifacts so each uses its idiomatic best representation rather than a common generated skeleton.
-- Add cases where runtime features matter, such as resumable workflows, parallel tool calls, and checkpoint recovery.
+- Add an executor benchmark where the same agent actually follows each artifact in a sandbox and the scorer checks concrete output files/actions.
+- Run each artifact multiple times and measure real success rate, requirement coverage, recovery, and variance.
+- Add hand-authored best-effort baselines for LangGraph, LlamaIndex Workflows, Pydantic AI, and OpenAI Agents SDK.
+- Keep the judge rubric outcome-only, and move readability/simplicity to explanatory analysis rather than score categories.

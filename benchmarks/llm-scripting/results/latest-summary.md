@@ -1,58 +1,58 @@
 # LLM Scripting Benchmark Results
 
 - Judge model: `gpt-5.5` via `openai`
-- Run started: `2026-06-16T15:42:34+00:00`
+- Run started: `2026-06-16T16:14:15+00:00`
 - Cases: release_notes, deploy_branch, onboard_service
 
 ## Overall Averages
 
-| Rank | System | Overall | Performance | Readability | Simplicity | Fidelity |
+| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | MDScript | 8.57 | 7.67 | 9.0 | 9.33 | 8.67 |
-| 2 | LMQL | 7.62 | 6.67 | 8.33 | 8.0 | 8.0 |
-| 3 | OpenAI Agents SDK | 7.57 | 6.67 | 8.33 | 8.0 | 7.67 |
-| 4 | Pydantic AI | 7.28 | 6.33 | 8.0 | 7.67 | 7.67 |
-| 5 | Microsoft Agent Framework | 6.53 | 4.33 | 7.67 | 8.0 | 7.33 |
-| 6 | Guidance | 6.48 | 5.0 | 7.67 | 6.67 | 7.67 |
-| 7 | ell | 6.23 | 4.67 | 7.33 | 6.67 | 7.33 |
-| 8 | LlamaIndex Workflows | 6.03 | 4.0 | 7.33 | 7.0 | 7.0 |
-| 9 | LangGraph | 5.7 | 3.33 | 7.67 | 6.67 | 6.33 |
-| 10 | DSPy | 5.15 | 3.0 | 6.67 | 5.33 | 7.33 |
+| 1 | LMQL | 7.37 | 7.67 | 8.33 | 5.0 | 6.67 |
+| 2 | MDScript | 7.33 | 7.67 | 7.67 | 5.67 | 7.33 |
+| 3 | Pydantic AI | 7.32 | 7.67 | 8.0 | 5.33 | 6.67 |
+| 4 | Guidance | 7.02 | 7.33 | 8.0 | 5.0 | 5.67 |
+| 5 | OpenAI Agents SDK | 6.92 | 7.0 | 7.67 | 5.33 | 6.67 |
+| 6 | ell | 6.8 | 7.0 | 7.67 | 5.0 | 6.0 |
+| 7 | Microsoft Agent Framework | 6.37 | 6.67 | 7.33 | 4.0 | 5.67 |
+| 8 | LlamaIndex Workflows | 6.13 | 6.33 | 7.33 | 3.67 | 5.33 |
+| 9 | LangGraph | 5.75 | 6.0 | 7.0 | 3.0 | 5.0 |
+| 10 | DSPy | 5.7 | 5.67 | 7.33 | 3.67 | 4.0 |
 
 ## Case Winners
 
-- `release_notes`: MDScript (8.9)
-- `deploy_branch`: MDScript (8.65)
-- `onboard_service`: MDScript (8.15)
+- `release_notes`: LMQL (7.75)
+- `deploy_branch`: LMQL (8.05)
+- `onboard_service`: OpenAI Agents SDK (7.0)
 
 ## Judge Notes By System
 
-### MDScript
-The workflow satisfies nearly all success criteria with clear readable steps, though a few state transitions and artifact creation details are underspecified. The artifact covers most required scaffolding decisions with readable steps, but misses Docker Compose-specific output and only partially enforces kebab-case. The artifact directly covers all success criteria with readable, simple steps, though it leaves exact git commands, edge cases, and some state details implicit.
-
 ### LMQL
-The workflow closely matches the required behavior in readable state bullets, but relies on natural-language execution for deployment, artifact packaging, and metric interpretation. The workflow covers most interactive scaffolding requirements with readable states, but misses explicit Docker Compose artifacts and leaves some validation and conditional generation semantics underspecified. The workflow expresses all core requirements at a high level, but relies on the LLM to infer concrete git/file operations and state persistence details.
+The artifact states nearly all required workflow behavior, but leaves some operational details and negative confirmation transitions ambiguous. The workflow addresses most required prompts and scaffolding steps, but misses Docker Compose handling and has weak validation and recovery semantics. The artifact directly encodes the requested changelog workflow and should usually succeed, but relies on the agent to fill in git command details and lacks robust failure handling.
 
-### OpenAI Agents SDK
-The workflow captures nearly all required control-flow semantics, but practical execution is weakened by vague deployment, rollback, artifact creation, environment, and health-check details. The workflow is readable and mostly faithful, but it misses Docker Compose-specific scaffolding and leaves several implementation details underspecified. The artifact covers the core release-notes workflow clearly, but leaves several practical tool commands and edge-case transitions underspecified.
+### MDScript
+The workflow satisfies most required deployment semantics, with minor ambiguity around packaging, failure stops, and branch/coverage confirmation rejection paths. The workflow satisfies most high-level scaffolding requirements but misses Docker Compose handling and leaves several validations and conditional branches vague. The workflow directly covers the main changelog generation path, but its categorization and recovery semantics are somewhat underspecified.
 
 ### Pydantic AI
-The artifact captures nearly all required workflow semantics in clear instructions, but several operational steps remain underspecified. The artifact captures most required interactive choices in readable state bullets, but it omits Docker Compose file generation and only partially validates service names. The artifact expresses all core requirements in readable workflow instructions, but execution reliability is limited by vague tool usage and largely implicit state control.
-
-### Microsoft Agent Framework
-The authored comments cover nearly all success criteria, but executable control flow is mostly linear and omits explicit conditional transitions for failures, retries, and rollback. The artifact captures most required workflow semantics in readable comments, but lacks an explicit Docker Compose scaffold path and relies on vague comment-only state and tool behavior. The artifact covers the main release-note workflow in comments, but lacks concrete tool/state operations and does not actually model the regeneration loop.
+The artifact captures nearly all required workflow semantics in instructions, but several operational details and some failure branches are underspecified. The workflow directly encodes most required interactions and scaffold actions, but misses Docker Compose-specific files and leaves validation and execution details somewhat underspecified. The artifact clearly encodes the required changelog workflow, but leaves command details and failure branches to the agent.
 
 ### Guidance
-The authored instructions cover most requirements clearly, but the executable control loop is weakly constrained and relies on the model to follow the prose exactly. The artifact expresses most required workflow semantics clearly, but relies on the model to choose and enforce actions and omits explicit Docker Compose deployment files. The artifact states most required workflow semantics clearly, but execution reliability is weakened by unconstrained LLM-selected actions and transitions rather than concrete tool calls or enforced state logic.
+The artifact states nearly all required behavior in natural language, but the executable loop does not enforce the conditions or transitions, making outcomes dependent on the agent's faithful interpretation. The artifact describes most required scaffolding behavior, but omits Docker Compose-specific output and relies on loose LM-selected actions and states rather than robust enforced control flow. The artifact states most required behavior clearly enough for a capable agent, but relies on free-form action generation and has limited recovery or deterministic control.
+
+### OpenAI Agents SDK
+The workflow states most required behavior, but several key actions are underspecified enough that reliable end-to-end deployment would require agent inference. The workflow captures most required decisions and scaffold steps, but misses explicit Docker Compose handling and leaves several implementation and recovery details vague. The artifact directly encodes most required behavior and a capable agent would likely complete the changelog, but some command details, conventional prefix matching, and recovery/regeneration semantics are incomplete.
 
 ### ell
-The artifact states nearly all required workflow behavior, but much of the practical execution is delegated to ambiguous model/tool decisions rather than explicit commands and transitions. The artifact captures most interactive requirements in readable workflow text, but it omits Docker Compose-specific file generation and relies on ambiguous model-mediated control flow. The artifact states most required workflow semantics, but leaves key tool calls and state transitions underspecified and only partially implements regeneration and maintenance-prefix categorization.
+The artifact restates nearly all required workflow semantics, but several operational steps are underspecified enough to reduce reliability. The workflow captures most required interactions and scaffold actions, but misses Docker Compose file handling and relies on broad natural-language instructions for several critical generation details. The workflow semantics are mostly sufficient for a capable agent to produce CHANGELOG.md, but several operational details and recovery paths are left vague.
+
+### Microsoft Agent Framework
+The artifact states nearly all required workflow semantics, but relies on comments and has ambiguous conditional control flow, reducing reliability if executed as authored. The workflow semantically covers most onboarding steps, but misses Docker Compose-specific output and leaves several validations and recovery paths underspecified. The comments describe most core behavior, but the executable workflow state transitions and regeneration support are incomplete and some categorization semantics are imprecise.
 
 ### LlamaIndex Workflows
-The artifact describes all major requirements in comments, but the executable workflow does not implement the conditional asks, confirmations, retries, rollback paths, or artifact/environment state handling. The artifact expresses most required onboarding semantics clearly, but relies on comment-level behavior and omits deployment-specific Docker Compose scaffolding. The artifact captures most required behavior in comments, but the executable workflow does not actually run git or branch for regeneration and only partially defines conventional-prefix maintenance grouping.
+The artifact states nearly all required behaviors in comments, but the executable workflow lacks conditional transitions and concrete tool semantics, making correct end-to-end execution only moderately likely. The workflow would likely scaffold a useful service and satisfy most criteria, but Docker Compose handling and failure recovery are under-specified. The artifact describes enough for a capable agent to produce a basic changelog, but key behavior is underspecified or not represented in actual workflow transitions.
 
 ### LangGraph
-The artifact describes the intended deploy workflow in comments but the executable graph ignores those decisions and cannot reliably perform confirmations, retries, failures, or rollbacks. The artifact describes most of the scaffold flow clearly, but relies on comments rather than concrete state updates and misses Docker Compose file handling. The artifact states most required release-note semantics in comments, but the executable workflow is a fixed linear graph with vague git/write steps and no real regeneration path.
+The artifact states most required behavior in comments, but the executable graph is linear and lacks concrete branching, retries, rollback paths, or user-confirmation handling. The workflow comments describe most required behavior, but Docker Compose handling and robust validation/recovery are underspecified. The comments express most core requirements, but the executable workflow is linear and does not actually support the stated regeneration loop or robust failure handling.
 
 ### DSPy
-The artifact faithfully describes the desired deployment workflow, but practical reliability is limited by ambiguous LLM-controlled actions and missing concrete state/result handling. The workflow captures most required semantics in readable prose, but execution reliability is weak and Docker Compose plus strict kebab-case handling are missing. The embedded workflow text covers most requirements, but the actual artifact delegates state transitions to an LLM without executing git or write steps and lacks reliable context/state mutation.
+The artifact states most required workflow semantics, but relies on a generative next-action loop without deterministic execution, state updates, or robust failure handling. The embedded workflow addresses most success criteria at a high level, but it relies on vague LLM state transitions and omits concrete Docker Compose handling. The workflow text captures most required behavior, but relies on vague LLM decisions without explicit tool calls, persisted outputs, or robust transitions.

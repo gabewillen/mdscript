@@ -790,25 +790,31 @@ def build_prompt(case: dict[str, Any], system_slug: str, artifact: str, blind_la
         {artifact_for_judge}
         ```
 
-        Rubric, 1 to 10:
-        - performance: expected execution reliability and practical efficiency for
-          this task. Reward explicit state, branches, failure handling, and low
-          incidental runtime overhead. Penalize ambiguity, hidden control flow, or
-          likely tool-use mistakes.
-        - readability: how easily a human maintainer can review and modify the
-          workflow artifact.
-        - simplicity: how little syntax, boilerplate, indirection, and framework
-          knowledge are needed for this task.
-        - fidelity: coverage of every success criterion.
+        Outcome rubric, 1 to 10:
+        - task_success: how likely a capable coding agent is to complete the task
+          end-to-end when following this artifact.
+        - requirements_met: how many explicit success criteria are likely to be
+          satisfied in the final produced result.
+        - failure_recovery: how likely the workflow is to recover from normal
+          branch/failure cases in this task, such as missing inputs, failed checks,
+          rejected confirmations, deployment failures, or regeneration requests.
+        - consistency: how likely repeated executions of the artifact are to
+          produce the same correct outcome without manual repair.
+
+        Do not score readability, simplicity, debuggability, or framework feature
+        depth as independent virtues. Those only matter if they change the
+        expected task result. A concise artifact that reliably produces the right
+        files/actions should score highly; a sophisticated artifact that does not
+        improve task outcome should not get extra credit.
 
         Return only compact JSON with this schema:
         {{
           "candidate": "{system_slug}",
           "case": "{case['id']}",
-          "performance": 1,
-          "readability": 1,
-          "simplicity": 1,
-          "fidelity": 1,
+          "task_success": 1,
+          "requirements_met": 1,
+          "failure_recovery": 1,
+          "consistency": 1,
           "overall": 1,
           "strengths": ["short phrase"],
           "weaknesses": ["short phrase"],
@@ -932,18 +938,18 @@ def clamp_score(value: Any) -> float:
 
 def normalize_judgment(raw: dict[str, Any], case_id: str, system_slug: str) -> dict[str, Any]:
     scores = {
-        "performance": clamp_score(raw.get("performance")),
-        "readability": clamp_score(raw.get("readability")),
-        "simplicity": clamp_score(raw.get("simplicity")),
-        "fidelity": clamp_score(raw.get("fidelity")),
+        "task_success": clamp_score(raw.get("task_success")),
+        "requirements_met": clamp_score(raw.get("requirements_met")),
+        "failure_recovery": clamp_score(raw.get("failure_recovery")),
+        "consistency": clamp_score(raw.get("consistency")),
     }
     if any(math.isnan(score) for score in scores.values()):
         raise ValueError(f"missing numeric score in {raw}")
     calculated_overall = (
-        0.35 * scores["performance"]
-        + 0.25 * scores["readability"]
-        + 0.25 * scores["simplicity"]
-        + 0.15 * scores["fidelity"]
+        0.45 * scores["task_success"]
+        + 0.30 * scores["requirements_met"]
+        + 0.15 * scores["failure_recovery"]
+        + 0.10 * scores["consistency"]
     )
     overall = clamp_score(raw.get("overall", calculated_overall))
     if math.isnan(overall):
@@ -986,10 +992,10 @@ def judge_candidate(
     return {
         "case": case["id"],
         "candidate": system_slug,
-        "performance": math.nan,
-        "readability": math.nan,
-        "simplicity": math.nan,
-        "fidelity": math.nan,
+        "task_success": math.nan,
+        "requirements_met": math.nan,
+        "failure_recovery": math.nan,
+        "consistency": math.nan,
         "overall": math.nan,
         "weighted_overall": math.nan,
         "strengths": [],
@@ -1014,10 +1020,10 @@ def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
     for slug, items in by_candidate.items():
         candidate_summary[slug] = {
             "name": slug_to_name(slug),
-            "performance": mean_score(items, "performance"),
-            "readability": mean_score(items, "readability"),
-            "simplicity": mean_score(items, "simplicity"),
-            "fidelity": mean_score(items, "fidelity"),
+            "task_success": mean_score(items, "task_success"),
+            "requirements_met": mean_score(items, "requirements_met"),
+            "failure_recovery": mean_score(items, "failure_recovery"),
+            "consistency": mean_score(items, "consistency"),
             "overall": mean_score(items, "weighted_overall"),
         }
 
@@ -1050,13 +1056,13 @@ def render_summary(run: dict[str, Any]) -> str:
         "",
         "## Overall Averages",
         "",
-        "| Rank | System | Overall | Performance | Readability | Simplicity | Fidelity |",
+        "| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |",
         "| ---: | --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for rank, (slug, item) in enumerate(ordered, 1):
         lines.append(
-            f"| {rank} | {item['name']} | {item['overall']} | {item['performance']} | "
-            f"{item['readability']} | {item['simplicity']} | {item['fidelity']} |"
+            f"| {rank} | {item['name']} | {item['overall']} | {item['task_success']} | "
+            f"{item['requirements_met']} | {item['failure_recovery']} | {item['consistency']} |"
         )
 
     lines += ["", "## Case Winners", ""]
@@ -1139,10 +1145,10 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             judgment = {
                 "case": case["id"],
                 "candidate": system_slug,
-                "performance": math.nan,
-                "readability": math.nan,
-                "simplicity": math.nan,
-                "fidelity": math.nan,
+                "task_success": math.nan,
+                "requirements_met": math.nan,
+                "failure_recovery": math.nan,
+                "consistency": math.nan,
                 "overall": math.nan,
                 "weighted_overall": math.nan,
                 "strengths": [],
@@ -1172,7 +1178,7 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
             "temperature": 0,
             "seed": args.seed,
             "rubric": {
-                "overall_formula": "0.35 performance + 0.25 readability + 0.25 simplicity + 0.15 fidelity",
+                "overall_formula": "0.45 task_success + 0.30 requirements_met + 0.15 failure_recovery + 0.10 consistency",
                 "scale": "1-10, higher is better",
             },
         },

@@ -1,6 +1,6 @@
 # LLM Scripting Benchmark
 
-This benchmark compares MDScript with modern LLM workflow and prompt-programming systems using an LLM-as-judge. It is intentionally representation-level: each system gets an equivalent source artifact for the same repository workflow, and the judge scores the artifact a maintainer would read and a coding agent would follow.
+This benchmark compares MDScript with modern LLM workflow and prompt-programming systems using an LLM-as-judge. It is intentionally representation-level: each system gets an equivalent source artifact for the same repository workflow, and the judge estimates whether a capable coding agent would produce the requested result when following that artifact.
 
 The default judge is `gemma4:e4b`, the smallest installed Gemma 4-family model in this environment. That is deliberate: a small local model is more likely to expose whether a format remains legible under long-horizon workflow pressure. For publishable judge results, run the OpenAI backend with `gpt-5.5` and `--blind-labels`.
 
@@ -28,49 +28,49 @@ Sources used for current positioning:
 
 ## Methodology
 
-The harness renders equivalent workflow artifacts for each candidate and case, then asks the same local judge to score each artifact on a 1-10 scale:
+The harness renders equivalent workflow artifacts for each candidate and case, then asks the same judge to score expected task outcomes on a 1-10 scale:
 
-- `performance`: expected execution reliability and practical efficiency for a capable coding agent.
-- `readability`: how easily a human can review and modify the workflow.
-- `simplicity`: how little syntax, boilerplate, indirection, and framework knowledge are needed.
-- `fidelity`: how fully the artifact covers the task success criteria.
+- `task_success`: how likely a capable coding agent is to complete the task end-to-end.
+- `requirements_met`: how many explicit success criteria are likely to be satisfied in the final result.
+- `failure_recovery`: how likely the workflow is to recover from normal branch/failure cases.
+- `consistency`: how likely repeated executions are to produce the same correct result without manual repair.
 
 Overall score is weighted as:
 
 ```text
-0.35 performance + 0.25 readability + 0.25 simplicity + 0.15 fidelity
+0.45 task_success + 0.30 requirements_met + 0.15 failure_recovery + 0.10 consistency
 ```
 
 The order of judge calls is randomized with a fixed seed to reduce position effects. All artifacts are generated locally from the same case definitions, and the judge prompt tells the model to score only the artifact, not ecosystem reputation. Use `--blind-labels` for publication-oriented runs; it masks candidate names in the judge prompt and replaces obvious framework identifiers in the artifact text.
 
-The judge prompt treats natural-language bullets, comments, and instruction strings as workflow semantics. That keeps the comparison focused on authoring representation rather than whether a Python baseline includes real tool implementations in the benchmark fixture.
+The judge prompt treats natural-language bullets, comments, and instruction strings as workflow semantics. It also explicitly tells the judge not to score readability, simplicity, debuggability, or framework feature depth as independent virtues. Those only matter if they change the expected task result.
 
 This benchmark does not install or run every framework. That is a feature of the test, not a shortcut: MDScript is not competing as a Python runtime framework, so giving framework baselines their full runtime machinery would make the comparison less apples-to-apples for readability and workflow expression.
 
 ## Latest Result
 
-The current publishable run used OpenAI `gpt-5.5` with `--blind-labels`. It completed all 30 judgments with zero parse failures.
+The current run used OpenAI `gpt-5.5` with `--blind-labels`. It completed all 30 judgments with zero parse failures.
 
 <!-- latest LLM scripting benchmark summary from results/latest.json -->
 
-| Rank | System | Overall | Performance | Readability | Simplicity | Fidelity |
+| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | MDScript | 8.57 | 7.67 | 9.00 | 9.33 | 8.67 |
-| 2 | LMQL | 7.62 | 6.67 | 8.33 | 8.00 | 8.00 |
-| 3 | OpenAI Agents SDK | 7.57 | 6.67 | 8.33 | 8.00 | 7.67 |
-| 4 | Pydantic AI | 7.28 | 6.33 | 8.00 | 7.67 | 7.67 |
-| 5 | Microsoft Agent Framework | 6.53 | 4.33 | 7.67 | 8.00 | 7.33 |
-| 6 | Guidance | 6.48 | 5.00 | 7.67 | 6.67 | 7.67 |
-| 7 | ell | 6.23 | 4.67 | 7.33 | 6.67 | 7.33 |
-| 8 | LlamaIndex Workflows | 6.03 | 4.00 | 7.33 | 7.00 | 7.00 |
-| 9 | LangGraph | 5.70 | 3.33 | 7.67 | 6.67 | 6.33 |
-| 10 | DSPy | 5.15 | 3.00 | 6.67 | 5.33 | 7.33 |
+| 1 | LMQL | 7.37 | 7.67 | 8.33 | 5.00 | 6.67 |
+| 2 | MDScript | 7.33 | 7.67 | 7.67 | 5.67 | 7.33 |
+| 3 | Pydantic AI | 7.32 | 7.67 | 8.00 | 5.33 | 6.67 |
+| 4 | Guidance | 7.02 | 7.33 | 8.00 | 5.00 | 5.67 |
+| 5 | OpenAI Agents SDK | 6.92 | 7.00 | 7.67 | 5.33 | 6.67 |
+| 6 | ell | 6.80 | 7.00 | 7.67 | 5.00 | 6.00 |
+| 7 | Microsoft Agent Framework | 6.37 | 6.67 | 7.33 | 4.00 | 5.67 |
+| 8 | LlamaIndex Workflows | 6.13 | 6.33 | 7.33 | 3.67 | 5.33 |
+| 9 | LangGraph | 5.75 | 6.00 | 7.00 | 3.00 | 5.00 |
+| 10 | DSPy | 5.70 | 5.67 | 7.33 | 3.67 | 4.00 |
 
 Case winners:
 
-- `release_notes`: MDScript, 8.90.
-- `deploy_branch`: MDScript, 8.65.
-- `onboard_service`: MDScript, 8.15.
+- `release_notes`: LMQL, 7.75.
+- `deploy_branch`: LMQL, 8.05.
+- `onboard_service`: OpenAI Agents SDK, 7.00.
 
 ## Run
 
