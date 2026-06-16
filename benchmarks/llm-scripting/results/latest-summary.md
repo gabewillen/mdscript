@@ -1,58 +1,61 @@
 # LLM Scripting Benchmark Results
 
+- Executor model: `gpt-5.5` via `openai`
 - Judge model: `gpt-5.5` via `openai`
-- Run started: `2026-06-16T16:14:15+00:00`
+- Execution runs per artifact: `3`
+- Judgments per execution: `3`
+- Run started: `2026-06-16T16:56:47+00:00`
 - Cases: release_notes, deploy_branch, onboard_service
 
 ## Overall Averages
 
-| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | LMQL | 7.37 | 7.67 | 8.33 | 5.0 | 6.67 |
-| 2 | MDScript | 7.33 | 7.67 | 7.67 | 5.67 | 7.33 |
-| 3 | Pydantic AI | 7.32 | 7.67 | 8.0 | 5.33 | 6.67 |
-| 4 | Guidance | 7.02 | 7.33 | 8.0 | 5.0 | 5.67 |
-| 5 | OpenAI Agents SDK | 6.92 | 7.0 | 7.67 | 5.33 | 6.67 |
-| 6 | ell | 6.8 | 7.0 | 7.67 | 5.0 | 6.0 |
-| 7 | Microsoft Agent Framework | 6.37 | 6.67 | 7.33 | 4.0 | 5.67 |
-| 8 | LlamaIndex Workflows | 6.13 | 6.33 | 7.33 | 3.67 | 5.33 |
-| 9 | LangGraph | 5.75 | 6.0 | 7.0 | 3.0 | 5.0 |
-| 10 | DSPy | 5.7 | 5.67 | 7.33 | 3.67 | 4.0 |
+| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | OpenAI Agents SDK | 9.71 | 9.93 | 9.56 | 9.33 | 0.29 | 27 |
+| 2 | DSPy | 9.54 | 9.81 | 9.44 | 8.85 | 0.3 | 27 |
+| 3 | ell | 9.39 | 9.56 | 9.22 | 9.22 | 0.55 | 27 |
+| 4 | Pydantic AI | 9.35 | 9.56 | 9.19 | 9.07 | 0.57 | 27 |
+| 5 | Guidance | 9.22 | 9.33 | 9.15 | 9.04 | 0.73 | 27 |
+| 6 | LMQL | 9.15 | 9.22 | 9.11 | 9.0 | 0.79 | 27 |
+| 7 | LangGraph | 9.05 | 9.26 | 8.85 | 8.81 | 0.64 | 27 |
+| 8 | LlamaIndex Workflows | 8.96 | 9.15 | 8.78 | 8.74 | 0.69 | 27 |
+| 9 | Microsoft Agent Framework | 8.94 | 9.07 | 8.81 | 8.78 | 0.71 | 27 |
+| 10 | MDScript | 8.87 | 8.89 | 8.93 | 8.67 | 0.75 | 27 |
 
 ## Case Winners
 
-- `release_notes`: LMQL (7.75)
-- `deploy_branch`: LMQL (8.05)
-- `onboard_service`: OpenAI Agents SDK (7.0)
+- `deploy_branch`: OpenAI Agents SDK (9.8)
+- `onboard_service`: DSPy (9.75)
+- `release_notes`: OpenAI Agents SDK (9.73)
 
 ## Judge Notes By System
 
-### LMQL
-The artifact states nearly all required workflow behavior, but leaves some operational details and negative confirmation transitions ambiguous. The workflow addresses most required prompts and scaffolding steps, but misses Docker Compose handling and has weak validation and recovery semantics. The artifact directly encodes the requested changelog workflow and should usually succeed, but relies on the agent to fill in git command details and lacks robust failure handling.
-
-### MDScript
-The workflow satisfies most required deployment semantics, with minor ambiguity around packaging, failure stops, and branch/coverage confirmation rejection paths. The workflow satisfies most high-level scaffolding requirements but misses Docker Compose handling and leaves several validations and conditional branches vague. The workflow directly covers the main changelog generation path, but its categorization and recovery semantics are somewhat underspecified.
-
-### Pydantic AI
-The artifact captures nearly all required workflow semantics in instructions, but several operational details and some failure branches are underspecified. The workflow directly encodes most required interactions and scaffold actions, but misses Docker Compose-specific files and leaves validation and execution details somewhat underspecified. The artifact clearly encodes the required changelog workflow, but leaves command details and failure branches to the agent.
-
-### Guidance
-The artifact states nearly all required behavior in natural language, but the executable loop does not enforce the conditions or transitions, making outcomes dependent on the agent's faithful interpretation. The artifact describes most required scaffolding behavior, but omits Docker Compose-specific output and relies on loose LM-selected actions and states rather than robust enforced control flow. The artifact states most required behavior clearly enough for a capable agent, but relies on free-form action generation and has limited recovery or deterministic control.
-
 ### OpenAI Agents SDK
-The workflow states most required behavior, but several key actions are underspecified enough that reliable end-to-end deployment would require agent inference. The workflow captures most required decisions and scaffold steps, but misses explicit Docker Compose handling and leaves several implementation and recovery details vague. The artifact directly encodes most required behavior and a capable agent would likely complete the changelog, but some command details, conventional prefix matching, and recovery/regeneration semantics are incomplete.
-
-### ell
-The artifact restates nearly all required workflow semantics, but several operational steps are underspecified enough to reduce reliability. The workflow captures most required interactions and scaffold actions, but misses Docker Compose file handling and relies on broad natural-language instructions for several critical generation details. The workflow semantics are mostly sufficient for a capable agent to produce CHANGELOG.md, but several operational details and recovery paths are left vague.
-
-### Microsoft Agent Framework
-The artifact states nearly all required workflow semantics, but relies on comments and has ambiguous conditional control flow, reducing reliability if executed as authored. The workflow semantically covers most onboarding steps, but misses Docker Compose-specific output and leaves several validations and recovery paths underspecified. The comments describe most core behavior, but the executable workflow state transitions and regeneration support are incomplete and some categorization semantics are imprecise.
-
-### LlamaIndex Workflows
-The artifact states nearly all required behaviors in comments, but the executable workflow lacks conditional transitions and concrete tool semantics, making correct end-to-end execution only moderately likely. The workflow would likely scaffold a useful service and satisfy most criteria, but Docker Compose handling and failure recovery are under-specified. The artifact describes enough for a capable agent to produce a basic changelog, but key behavior is underspecified or not represented in actual workflow transitions.
-
-### LangGraph
-The artifact states most required behavior in comments, but the executable graph is linear and lacks concrete branching, retries, rollback paths, or user-confirmation handling. The workflow comments describe most required behavior, but Docker Compose handling and robust validation/recovery are underspecified. The comments express most core requirements, but the executable workflow is linear and does not actually support the stated regeneration loop or robust failure handling.
+The execution completed the scenario successfully with correct ordering, artifact creation, deployment, and three-attempt health verification. The execution satisfies the scenario end-to-end, including ordered checks, artifact deployment, and successful recovery after two failed health checks. The result fully matches the provided scenario, with only untriggered conditional requirements supported by stated evidence rather than demonstrated actions.
 
 ### DSPy
-The artifact states most required workflow semantics, but relies on a generative next-action loop without deterministic execution, state updates, or robust failure handling. The embedded workflow addresses most success criteria at a high level, but it relies on vague LLM state transitions and omits concrete Docker Compose handling. The workflow text captures most required behavior, but relies on vague LLM decisions without explicit tool calls, persisted outputs, or robust transitions.
+The execution completes the scenario correctly end-to-end, with strong evidence for the applicable checks, build, deploy, and health retry behavior. The execution matches the provided scenario well, with only conditional failure/confirmation behaviors not directly demonstrated. The execution completes the scenario correctly, with only untriggered conditional requirements supported by assertions rather than observed actions.
+
+### ell
+The execution satisfies the scenario end-to-end, with only unexercised edge-case requirements lacking direct evidence. The execution completed the requested staging deployment successfully and handled the failing health checks with retries as expected. The result completes the scenario end-to-end with correct ordering, artifact deployment, and health-check retry behavior; missing-branch, main-confirmation, low-coverage, and deployment-failure rollback paths are only asserted rather than demonstrated.
+
+### Pydantic AI
+The execution completed the scenario correctly, with only untriggered conditional behaviors supported mainly by assertions rather than observed evidence. The execution completed the staging deployment successfully with correct ordering, artifact output, and three health-check attempts, while untriggered guardrail paths rely on stated evidence rather than observed actions. The scenario was completed end-to-end with the expected artifact and correct health-check retry behavior, with only untested conditional paths limiting full credit.
+
+### Guidance
+The execution completed the deployment flow and health retry behavior, but created the wrong artifact path compared with the expected artifact. The scenario completed successfully except the created artifact used the raw branch path instead of the expected sanitized timestamped artifact name. The execution completed the scenario successfully except for creating the artifact at the wrong path/name compared with the expected artifact.
+
+### LMQL
+The execution satisfies the scenario fully, with only untested conditional requirements relying on stated evidence rather than observed actions. The execution completed the requested staging deployment successfully and handled the failing health checks with retries as expected. The execution matches the scenario well, including ordered checks, build, staging deploy, and health-check retries, with only unexercised rollback/confirmation paths not directly demonstrated.
+
+### LangGraph
+The execution matches the scenario well, with only conditional failure and confirmation behaviors supported by stated evidence rather than observed actions. The execution completed the requested staging deployment successfully and demonstrated the required health-check retry behavior for this scenario. The execution satisfies the scenario end-to-end, with only untested conditional behaviors supported by claimed logic rather than observed actions.
+
+### LlamaIndex Workflows
+The scenario was completed end-to-end with the required checks, artifact, deployment, and health-check retry behavior; untriggered edge-case requirements are supported only by stated evidence. The result satisfies the scenario end-to-end, but several general requirements are supported only by claimed semantics rather than observed execution. The scenario was completed successfully with correct ordering and health-check retry behavior, though some untriggered success criteria are supported only by claimed semantics rather than observed actions.
+
+### Microsoft Agent Framework
+The execution completed the scenario end-to-end with correct ordering, artifact, deployment target, and health-check retry behavior. The produced result matches the scenario fully, with only untriggered conditional failure and confirmation paths relying on asserted evidence rather than observed actions. The execution satisfies the scenario end-to-end, with only untriggered confirmation and rollback requirements supported by claimed semantics rather than observed actions.
+
+### MDScript
+The scenario largely completed successfully, but the created artifact was dist/feature/checkout-health-{timestamp}.tar.gz instead of the expected dist/feature-checkout-health-{timestamp}.tar.gz. The run completed the main happy path and health retry scenario, but produced dist/feature/checkout-health-{timestamp}.tar.gz instead of the expected dist/feature-checkout-health-{timestamp}.tar.gz. The execution completes the scenario successfully except the artifact name/path differs from the expected dist/feature-checkout-health-{timestamp}.tar.gz.

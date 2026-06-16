@@ -1,6 +1,6 @@
 # LLM Scripting Benchmark
 
-This benchmark compares MDScript with modern LLM workflow and prompt-programming systems using an LLM-as-judge. It is intentionally representation-level: each system gets an equivalent source artifact for the same repository workflow, and the judge estimates whether a capable coding agent would produce the requested result when following that artifact.
+This benchmark compares MDScript with modern LLM workflow and prompt-programming systems using a two-stage LLM execution and judgment loop. It is intentionally representation-level: each system gets an equivalent source artifact for the same repository workflow, an executor model attempts the workflow three times, and a judge model scores each produced result three times.
 
 The default judge is `gemma4:e4b`, the smallest installed Gemma 4-family model in this environment. That is deliberate: a small local model is more likely to expose whether a format remains legible under long-horizon workflow pressure. For publishable judge results, run the OpenAI backend with `gpt-5.5` and `--blind-labels`.
 
@@ -28,49 +28,53 @@ Sources used for current positioning:
 
 ## Methodology
 
-The harness renders equivalent workflow artifacts for each candidate and case, then asks the same judge to score expected task outcomes on a 1-10 scale:
+The harness renders equivalent workflow artifacts for each candidate and case. For each artifact, it runs:
+
+1. Three independent execution attempts against a fixed task scenario.
+2. Three independent judgments for each produced execution result.
+
+That yields 9 judgments per case/system and 27 judgments per system across the three cases. Each judgment scores produced task outcomes on a 1-10 scale:
 
 - `task_success`: how likely a capable coding agent is to complete the task end-to-end.
 - `requirements_met`: how many explicit success criteria are likely to be satisfied in the final result.
 - `failure_recovery`: how likely the workflow is to recover from normal branch/failure cases.
-- `consistency`: how likely repeated executions are to produce the same correct result without manual repair.
 
 Overall score is weighted as:
 
 ```text
-0.45 task_success + 0.30 requirements_met + 0.15 failure_recovery + 0.10 consistency
+0.50 task_success + 0.35 requirements_met + 0.15 failure_recovery
 ```
 
 The order of judge calls is randomized with a fixed seed to reduce position effects. All artifacts are generated locally from the same case definitions, and the judge prompt tells the model to score only the artifact, not ecosystem reputation. Use `--blind-labels` for publication-oriented runs; it masks candidate names in the judge prompt and replaces obvious framework identifiers in the artifact text.
 
-The judge prompt treats natural-language bullets, comments, and instruction strings as workflow semantics. It also explicitly tells the judge not to score readability, simplicity, debuggability, or framework feature depth as independent virtues. Those only matter if they change the expected task result.
+The executor prompt treats natural-language bullets, comments, and instruction strings as workflow semantics. The judge prompt scores only produced execution results, not readability, simplicity, debuggability, or framework feature depth as independent virtues.
 
 This benchmark does not install or run every framework. That is a feature of the test, not a shortcut: MDScript is not competing as a Python runtime framework, so giving framework baselines their full runtime machinery would make the comparison less apples-to-apples for readability and workflow expression.
 
 ## Latest Result
 
-The current run used OpenAI `gpt-5.5` with `--blind-labels`. It completed all 30 judgments with zero parse failures.
+The current run used OpenAI `gpt-5.5` with `--blind-labels`. It completed 90 executions and 270 judgments with zero parse failures.
 
 <!-- latest LLM scripting benchmark summary from results/latest.json -->
 
-| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | LMQL | 7.37 | 7.67 | 8.33 | 5.00 | 6.67 |
-| 2 | MDScript | 7.33 | 7.67 | 7.67 | 5.67 | 7.33 |
-| 3 | Pydantic AI | 7.32 | 7.67 | 8.00 | 5.33 | 6.67 |
-| 4 | Guidance | 7.02 | 7.33 | 8.00 | 5.00 | 5.67 |
-| 5 | OpenAI Agents SDK | 6.92 | 7.00 | 7.67 | 5.33 | 6.67 |
-| 6 | ell | 6.80 | 7.00 | 7.67 | 5.00 | 6.00 |
-| 7 | Microsoft Agent Framework | 6.37 | 6.67 | 7.33 | 4.00 | 5.67 |
-| 8 | LlamaIndex Workflows | 6.13 | 6.33 | 7.33 | 3.67 | 5.33 |
-| 9 | LangGraph | 5.75 | 6.00 | 7.00 | 3.00 | 5.00 |
-| 10 | DSPy | 5.70 | 5.67 | 7.33 | 3.67 | 4.00 |
+| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | OpenAI Agents SDK | 9.71 | 9.93 | 9.56 | 9.33 | 0.29 | 27 |
+| 2 | DSPy | 9.54 | 9.81 | 9.44 | 8.85 | 0.30 | 27 |
+| 3 | ell | 9.39 | 9.56 | 9.22 | 9.22 | 0.55 | 27 |
+| 4 | Pydantic AI | 9.35 | 9.56 | 9.19 | 9.07 | 0.57 | 27 |
+| 5 | Guidance | 9.22 | 9.33 | 9.15 | 9.04 | 0.73 | 27 |
+| 6 | LMQL | 9.15 | 9.22 | 9.11 | 9.00 | 0.79 | 27 |
+| 7 | LangGraph | 9.05 | 9.26 | 8.85 | 8.81 | 0.64 | 27 |
+| 8 | LlamaIndex Workflows | 8.96 | 9.15 | 8.78 | 8.74 | 0.69 | 27 |
+| 9 | Microsoft Agent Framework | 8.94 | 9.07 | 8.81 | 8.78 | 0.71 | 27 |
+| 10 | MDScript | 8.87 | 8.89 | 8.93 | 8.67 | 0.75 | 27 |
 
 Case winners:
 
-- `release_notes`: LMQL, 7.75.
-- `deploy_branch`: LMQL, 8.05.
-- `onboard_service`: OpenAI Agents SDK, 7.00.
+- `release_notes`: OpenAI Agents SDK, 9.73.
+- `deploy_branch`: OpenAI Agents SDK, 9.80.
+- `onboard_service`: DSPy, 9.75.
 
 ## Run
 
@@ -85,6 +89,8 @@ python3 benchmarks/llm-scripting/benchmark.py \
   --backend openai \
   --model gpt-5.5 \
   --blind-labels \
+  --execution-runs 3 \
+  --judgments-per-run 3 \
   --env-file ../cortext/.env
 ```
 
@@ -95,6 +101,7 @@ python3 benchmarks/llm-scripting/benchmark.py --backend ollama --model gemma4:e4
 python3 benchmarks/llm-scripting/benchmark.py --model gemma4:e4b
 python3 benchmarks/llm-scripting/benchmark.py --cases release_notes,deploy_branch
 python3 benchmarks/llm-scripting/benchmark.py --systems mdscript,langgraph,guidance
+python3 benchmarks/llm-scripting/benchmark.py --execution-runs 1 --judgments-per-run 1
 python3 benchmarks/llm-scripting/benchmark.py --dry-run
 ```
 

@@ -170,22 +170,22 @@ MDScript bridges human readability with machine executability by keeping structu
 
 ## Benchmark Results
 
-The latest LLM workflow benchmark used OpenAI `gpt-5.5` as a blinded judge across three workflow cases. It scores expected task outcomes: task success, requirements met, failure recovery, and repeated-run consistency. See `benchmarks/llm-scripting/` for methodology, raw results, and analysis.
+The latest LLM workflow benchmark used OpenAI `gpt-5.5` for three blinded execution attempts per workflow and three independent judgments per execution across three workflow cases. It scores produced task outcomes: task success, requirements met, and failure recovery. See `benchmarks/llm-scripting/` for methodology, raw results, and analysis.
 
 <!-- latest LLM scripting benchmark summary from benchmarks/llm-scripting/results/latest.json -->
 
-| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 1 | LMQL | 7.37 | 7.67 | 8.33 | 5.00 | 6.67 |
-| 2 | MDScript | 7.33 | 7.67 | 7.67 | 5.67 | 7.33 |
-| 3 | Pydantic AI | 7.32 | 7.67 | 8.00 | 5.33 | 6.67 |
-| 4 | Guidance | 7.02 | 7.33 | 8.00 | 5.00 | 5.67 |
-| 5 | OpenAI Agents SDK | 6.92 | 7.00 | 7.67 | 5.33 | 6.67 |
-| 6 | ell | 6.80 | 7.00 | 7.67 | 5.00 | 6.00 |
-| 7 | Microsoft Agent Framework | 6.37 | 6.67 | 7.33 | 4.00 | 5.67 |
-| 8 | LlamaIndex Workflows | 6.13 | 6.33 | 7.33 | 3.67 | 5.33 |
-| 9 | LangGraph | 5.75 | 6.00 | 7.00 | 3.00 | 5.00 |
-| 10 | DSPy | 5.70 | 5.67 | 7.33 | 3.67 | 4.00 |
+| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | OpenAI Agents SDK | 9.71 | 9.93 | 9.56 | 9.33 | 0.29 | 27 |
+| 2 | DSPy | 9.54 | 9.81 | 9.44 | 8.85 | 0.30 | 27 |
+| 3 | ell | 9.39 | 9.56 | 9.22 | 9.22 | 0.55 | 27 |
+| 4 | Pydantic AI | 9.35 | 9.56 | 9.19 | 9.07 | 0.57 | 27 |
+| 5 | Guidance | 9.22 | 9.33 | 9.15 | 9.04 | 0.73 | 27 |
+| 6 | LMQL | 9.15 | 9.22 | 9.11 | 9.00 | 0.79 | 27 |
+| 7 | LangGraph | 9.05 | 9.26 | 8.85 | 8.81 | 0.64 | 27 |
+| 8 | LlamaIndex Workflows | 8.96 | 9.15 | 8.78 | 8.74 | 0.69 | 27 |
+| 9 | Microsoft Agent Framework | 8.94 | 9.07 | 8.81 | 8.78 | 0.71 | 27 |
+| 10 | MDScript | 8.87 | 8.89 | 8.93 | 8.67 | 0.75 | 27 |
 
 ## Install the `/mdscript` skill
 

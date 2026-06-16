@@ -10,6 +10,7 @@ follow.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import datetime as dt
 import json
 import math
@@ -27,6 +28,7 @@ from typing import Any
 DEFAULT_MODEL = "gemma4:e4b"
 DEFAULT_OPENAI_MODEL = "gpt-5.5"
 RESULTS_DIR = Path(__file__).with_name("results")
+SCORE_KEYS = ("task_success", "requirements_met", "failure_recovery")
 
 
 SYSTEMS: dict[str, dict[str, str]] = {
@@ -275,6 +277,68 @@ CASES: list[dict[str, Any]] = [
         ],
     },
 ]
+
+
+SCENARIOS: dict[str, dict[str, Any]] = {
+    "release_notes": {
+        "initial_inputs": {"git_range": ""},
+        "repository_state": {
+            "last_tag": "v1.4.0",
+            "head": "HEAD",
+            "git_log_subjects": [
+                "feat: add service template variables",
+                "fix: preserve markdown links in generated notes",
+                "docs: clarify deployment instructions",
+                "bug: avoid duplicate changelog sections",
+                "chore: update examples",
+            ],
+        },
+        "user_choices": {
+            "regenerate_after_first_result": False,
+        },
+        "expected_artifacts": ["CHANGELOG.md"],
+    },
+    "deploy_branch": {
+        "initial_inputs": {
+            "branch": "feature/checkout-health",
+            "environment": "staging",
+            "deploy_url": "https://staging.example.test",
+        },
+        "command_results": {
+            "npm run typecheck": "passes",
+            "npm run test -- --coverage": "passes with 82 percent coverage",
+            "npm run build": "passes",
+            "health_check": "fails twice, then passes on the third attempt",
+        },
+        "user_choices": {
+            "proceed_on_low_coverage": True,
+            "approve_main_deploy": False,
+        },
+        "expected_artifacts": ["dist/feature-checkout-health-{timestamp}.tar.gz"],
+    },
+    "onboard_service": {
+        "initial_inputs": {"service_name": ""},
+        "user_choices": {
+            "service_name": "billing-api",
+            "language": "Go",
+            "database": "SQLite",
+            "messaging": "NATS",
+            "http_framework": "raw server",
+            "deploy_target": "Docker Compose",
+            "health_endpoint": True,
+            "initialize_git": False,
+            "run_locally_now": False,
+        },
+        "expected_artifacts": [
+            "services/billing-api/README.md",
+            "services/billing-api/go.mod",
+            "services/billing-api/cmd/main.go",
+            "services/billing-api/docker-compose.yml",
+            "services/billing-api/internal/db/sqlite.go",
+            "services/billing-api/internal/messaging/nats.go",
+        ],
+    },
+}
 
 
 def slug_to_name(slug: str) -> str:
@@ -746,7 +810,11 @@ def anonymize_artifact(system_slug: str, artifact: str) -> str:
     return masked
 
 
-def build_prompt(case: dict[str, Any], system_slug: str, artifact: str, blind_labels: bool) -> str:
+def candidate_header_and_artifact(
+    system_slug: str,
+    artifact: str,
+    blind_labels: bool,
+) -> tuple[str, str]:
     system = SYSTEMS[system_slug]
     if blind_labels:
         candidate_header = textwrap.dedent(
@@ -756,65 +824,122 @@ def build_prompt(case: dict[str, Any], system_slug: str, artifact: str, blind_la
             - kind: anonymized workflow artifact
             """
         ).strip()
-        artifact_for_judge = anonymize_artifact(system_slug, artifact)
-    else:
-        candidate_header = textwrap.dedent(
-            f"""
-            Candidate:
-            - id: {system_slug}
-            - name: {system['name']}
-            - kind: {system['kind']}
-            """
-        ).strip()
-        artifact_for_judge = artifact
+        return candidate_header, anonymize_artifact(system_slug, artifact)
+    candidate_header = textwrap.dedent(
+        f"""
+        Candidate:
+        - id: {system_slug}
+        - name: {system['name']}
+        - kind: {system['kind']}
+        """
+    ).strip()
+    return candidate_header, artifact
+
+
+def build_execution_prompt(
+    case: dict[str, Any],
+    system_slug: str,
+    artifact: str,
+    blind_labels: bool,
+    run_index: int,
+) -> str:
+    candidate_header, artifact_for_executor = candidate_header_and_artifact(
+        system_slug, artifact, blind_labels
+    )
+    scenario = json.dumps(SCENARIOS[case["id"]], indent=2, sort_keys=True)
     return textwrap.dedent(
         f"""
-        You are judging one LLM workflow artifact against one task. Score only the
-        source artifact shown below, not the general reputation of the ecosystem.
-        Assume a capable coding agent can execute normal shell, file, ask-user,
-        notification, and deployment tools when the artifact clearly asks for them.
-        This is a workflow-authoring comparison: natural-language bullets,
-        comments, and instruction strings are part of the authored workflow
-        semantics when they are how the artifact expresses behavior. Do not
-        penalize omitted host tool implementations or framework plumbing marked
-        with ellipses. Do penalize missing workflow requirements, ambiguous state
-        transitions, vague tool use, or semantics that are only implied.
+        You are executing one repository workflow artifact as a capable coding
+        agent. Follow the artifact as faithfully as possible using the fixed task
+        scenario. Do not judge the artifact. Produce the result that would exist
+        after this execution attempt.
+
+        Treat natural-language bullets, comments, and instruction strings as
+        executable workflow semantics. Host tool bodies marked with ellipses are
+        available if the workflow clearly calls for them.
 
         Task:
         {numbered_requirements(case)}
+
+        Scenario:
+        ```json
+        {scenario}
+        ```
+
+        Execution run: {run_index}
 
         {candidate_header}
 
         Artifact:
         ```text
-        {artifact_for_judge}
+        {artifact_for_executor}
         ```
-
-        Outcome rubric, 1 to 10:
-        - task_success: how likely a capable coding agent is to complete the task
-          end-to-end when following this artifact.
-        - requirements_met: how many explicit success criteria are likely to be
-          satisfied in the final produced result.
-        - failure_recovery: how likely the workflow is to recover from normal
-          branch/failure cases in this task, such as missing inputs, failed checks,
-          rejected confirmations, deployment failures, or regeneration requests.
-        - consistency: how likely repeated executions of the artifact are to
-          produce the same correct outcome without manual repair.
-
-        Do not score readability, simplicity, debuggability, or framework feature
-        depth as independent virtues. Those only matter if they change the
-        expected task result. A concise artifact that reliably produces the right
-        files/actions should score highly; a sophisticated artifact that does not
-        improve task outcome should not get extra credit.
 
         Return only compact JSON with this schema:
         {{
           "candidate": "{system_slug}",
           "case": "{case['id']}",
+          "run": {run_index},
+          "completed": true,
+          "actions_taken": ["short concrete action"],
+          "files_created_or_modified": ["path or artifact"],
+          "requirements": [
+            {{"criterion": "success criterion text", "satisfied": true, "evidence": "short evidence"}}
+          ],
+          "failures_or_gaps": ["short phrase"],
+          "recovery_behavior": ["short phrase"],
+          "final_summary": "one sentence"
+        }}
+        """
+    ).strip()
+
+
+def build_result_judge_prompt(
+    case: dict[str, Any],
+    system_slug: str,
+    execution: dict[str, Any],
+    judgment_index: int,
+) -> str:
+    scenario = json.dumps(SCENARIOS[case["id"]], indent=2, sort_keys=True)
+    execution_json = json.dumps(execution, indent=2, sort_keys=True)
+    return textwrap.dedent(
+        f"""
+        You are judging one produced workflow execution result against the task.
+        Score only the produced result and its evidence, not the workflow
+        language's reputation, readability, simplicity, or feature depth.
+
+        Task:
+        {numbered_requirements(case)}
+
+        Scenario:
+        ```json
+        {scenario}
+        ```
+
+        Execution result:
+        ```json
+        {execution_json}
+        ```
+
+        Judgment repetition: {judgment_index}
+
+        Outcome rubric, 1 to 10:
+        - task_success: did the execution complete the requested task end-to-end?
+        - requirements_met: how many explicit success criteria are satisfied by
+          the produced result and evidence?
+        - failure_recovery: did the execution handle normal branch/failure cases
+          in the scenario, such as missing inputs, failed checks, health retries,
+          rejected confirmations, or regeneration choices?
+
+        Return only compact JSON with this schema:
+        {{
+          "candidate": "{system_slug}",
+          "case": "{case['id']}",
+          "run": {execution.get('run', 0)},
+          "judgment": {judgment_index},
           "task_success": 1,
           "requirements_met": 1,
           "failure_recovery": 1,
-          "consistency": 1,
           "overall": 1,
           "strengths": ["short phrase"],
           "weaknesses": ["short phrase"],
@@ -937,19 +1062,13 @@ def clamp_score(value: Any) -> float:
 
 
 def normalize_judgment(raw: dict[str, Any], case_id: str, system_slug: str) -> dict[str, Any]:
-    scores = {
-        "task_success": clamp_score(raw.get("task_success")),
-        "requirements_met": clamp_score(raw.get("requirements_met")),
-        "failure_recovery": clamp_score(raw.get("failure_recovery")),
-        "consistency": clamp_score(raw.get("consistency")),
-    }
+    scores = {key: clamp_score(raw.get(key)) for key in SCORE_KEYS}
     if any(math.isnan(score) for score in scores.values()):
         raise ValueError(f"missing numeric score in {raw}")
     calculated_overall = (
-        0.45 * scores["task_success"]
-        + 0.30 * scores["requirements_met"]
+        0.50 * scores["task_success"]
+        + 0.35 * scores["requirements_met"]
         + 0.15 * scores["failure_recovery"]
-        + 0.10 * scores["consistency"]
     )
     overall = clamp_score(raw.get("overall", calculated_overall))
     if math.isnan(overall):
@@ -966,17 +1085,74 @@ def normalize_judgment(raw: dict[str, Any], case_id: str, system_slug: str) -> d
     }
 
 
-def judge_candidate(
+def normalize_execution(raw: dict[str, Any], case_id: str, system_slug: str, run_index: int) -> dict[str, Any]:
+    requirements = raw.get("requirements")
+    if not isinstance(requirements, list):
+        requirements = []
+    return {
+        "case": case_id,
+        "candidate": system_slug,
+        "run": int(raw.get("run") or run_index),
+        "completed": bool(raw.get("completed")),
+        "actions_taken": list(raw.get("actions_taken") or [])[:30],
+        "files_created_or_modified": list(raw.get("files_created_or_modified") or [])[:30],
+        "requirements": requirements[:20],
+        "failures_or_gaps": list(raw.get("failures_or_gaps") or [])[:20],
+        "recovery_behavior": list(raw.get("recovery_behavior") or [])[:20],
+        "final_summary": str(raw.get("final_summary", ""))[:1000],
+    }
+
+
+def execute_candidate(
     case: dict[str, Any],
     system_slug: str,
     artifact: str,
     backend: str,
     model: str,
     blind_labels: bool,
+    run_index: int,
     timeout: int,
     retries: int,
 ) -> dict[str, Any]:
-    prompt = build_prompt(case, system_slug, artifact, blind_labels)
+    prompt = build_execution_prompt(case, system_slug, artifact, blind_labels, run_index)
+    last_error: str | None = None
+    raw_text = ""
+    for _ in range(retries + 1):
+        try:
+            raw_text = call_judge(backend, model, prompt, timeout)
+            raw = extract_json(raw_text)
+            result = normalize_execution(raw, case["id"], system_slug, run_index)
+            result["raw_response"] = raw_text
+            return result
+        except (json.JSONDecodeError, KeyError, ValueError, RuntimeError, urllib.error.URLError, TimeoutError) as exc:
+            last_error = repr(exc)
+            prompt += "\n\nYour previous answer was not valid JSON. Return only the required JSON object."
+    return {
+        "case": case["id"],
+        "candidate": system_slug,
+        "run": run_index,
+        "completed": False,
+        "actions_taken": [],
+        "files_created_or_modified": [],
+        "requirements": [],
+        "failures_or_gaps": [last_error or "unknown execution error"],
+        "recovery_behavior": [],
+        "final_summary": "execution failed",
+        "raw_response": raw_text,
+    }
+
+
+def judge_execution(
+    case: dict[str, Any],
+    system_slug: str,
+    execution: dict[str, Any],
+    backend: str,
+    model: str,
+    judgment_index: int,
+    timeout: int,
+    retries: int,
+) -> dict[str, Any]:
+    prompt = build_result_judge_prompt(case, system_slug, execution, judgment_index)
     last_error: str | None = None
     raw_text = ""
     for _ in range(retries + 1):
@@ -984,18 +1160,18 @@ def judge_candidate(
             raw_text = call_judge(backend, model, prompt, timeout)
             raw = extract_json(raw_text)
             result = normalize_judgment(raw, case["id"], system_slug)
+            result["run"] = int(execution.get("run", 0))
+            result["judgment"] = judgment_index
             result["raw_response"] = raw_text
             return result
-        except (json.JSONDecodeError, KeyError, ValueError, urllib.error.URLError, TimeoutError) as exc:
+        except (json.JSONDecodeError, KeyError, ValueError, RuntimeError, urllib.error.URLError, TimeoutError) as exc:
             last_error = repr(exc)
             prompt += "\n\nYour previous answer was not valid JSON. Return only the required JSON object."
-    return {
+    failed = {
         "case": case["id"],
         "candidate": system_slug,
-        "task_success": math.nan,
-        "requirements_met": math.nan,
-        "failure_recovery": math.nan,
-        "consistency": math.nan,
+        "run": int(execution.get("run", 0)),
+        "judgment": judgment_index,
         "overall": math.nan,
         "weighted_overall": math.nan,
         "strengths": [],
@@ -1003,6 +1179,9 @@ def judge_candidate(
         "notes": "judge failed",
         "raw_response": raw_text,
     }
+    for key in SCORE_KEYS:
+        failed[key] = math.nan
+    return failed
 
 
 def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1016,26 +1195,37 @@ def aggregate(results: list[dict[str, Any]]) -> dict[str, Any]:
         values = [item[key] for item in items if not math.isnan(float(item[key]))]
         return round(statistics.mean(values), 2) if values else math.nan
 
+    def stdev_score(items: list[dict[str, Any]], key: str) -> float:
+        values = [item[key] for item in items if not math.isnan(float(item[key]))]
+        return round(statistics.pstdev(values), 2) if len(values) > 1 else 0.0
+
     candidate_summary = {}
     for slug, items in by_candidate.items():
         candidate_summary[slug] = {
             "name": slug_to_name(slug),
-            "task_success": mean_score(items, "task_success"),
-            "requirements_met": mean_score(items, "requirements_met"),
-            "failure_recovery": mean_score(items, "failure_recovery"),
-            "consistency": mean_score(items, "consistency"),
+            **{key: mean_score(items, key) for key in SCORE_KEYS},
             "overall": mean_score(items, "weighted_overall"),
+            "overall_stdev": stdev_score(items, "weighted_overall"),
+            "judgments": len(items),
         }
 
     case_winners = {}
     for case_id, items in by_case.items():
-        valid = [item for item in items if not math.isnan(float(item["weighted_overall"]))]
-        if valid:
-            winner = max(valid, key=lambda item: item["weighted_overall"])
+        candidate_scores = []
+        for slug in SYSTEMS:
+            candidate_items = [
+                item
+                for item in items
+                if item["candidate"] == slug and not math.isnan(float(item["weighted_overall"]))
+            ]
+            if candidate_items:
+                candidate_scores.append((mean_score(candidate_items, "weighted_overall"), slug))
+        if candidate_scores:
+            score, slug = max(candidate_scores, key=lambda item: item[0])
             case_winners[case_id] = {
-                "candidate": winner["candidate"],
-                "name": slug_to_name(winner["candidate"]),
-                "score": winner["weighted_overall"],
+                "candidate": slug,
+                "name": slug_to_name(slug),
+                "score": score,
             }
 
     return {
@@ -1050,19 +1240,23 @@ def render_summary(run: dict[str, Any]) -> str:
     lines = [
         "# LLM Scripting Benchmark Results",
         "",
-        f"- Judge model: `{run['judge']['model']}` via `{run['judge']['backend']}`",
+        f"- Executor model: `{run['judge']['executor_model']}` via `{run['judge']['backend']}`",
+        f"- Judge model: `{run['judge']['judge_model']}` via `{run['judge']['backend']}`",
+        f"- Execution runs per artifact: `{run['judge']['execution_runs']}`",
+        f"- Judgments per execution: `{run['judge']['judgments_per_run']}`",
         f"- Run started: `{run['started_at']}`",
         f"- Cases: {', '.join(case['id'] for case in CASES)}",
         "",
         "## Overall Averages",
         "",
-        "| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Consistency |",
-        "| ---: | --- | ---: | ---: | ---: | ---: | ---: |",
+        "| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |",
+        "| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for rank, (slug, item) in enumerate(ordered, 1):
         lines.append(
             f"| {rank} | {item['name']} | {item['overall']} | {item['task_success']} | "
-            f"{item['requirements_met']} | {item['failure_recovery']} | {item['consistency']} |"
+            f"{item['requirements_met']} | {item['failure_recovery']} | {item['overall_stdev']} | "
+            f"{item['judgments']} |"
         )
 
     lines += ["", "## Case Winners", ""]
@@ -1087,7 +1281,7 @@ def write_outputs(run: dict[str, Any], output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = run["started_at"].replace(":", "").replace("-", "").replace("+", "Z")
     backend = re.sub(r"[^A-Za-z0-9_.-]+", "-", run["judge"]["backend"])
-    model = re.sub(r"[^A-Za-z0-9_.-]+", "-", run["judge"]["model"])
+    model = re.sub(r"[^A-Za-z0-9_.-]+", "-", run["judge"]["judge_model"])
     output_path = output_dir / f"{timestamp}-{backend}-{model}.json"
     output_path.write_text(json.dumps(run, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     latest_path = output_dir / "latest.json"
@@ -1125,60 +1319,193 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         load_env_file(args.env_file)
     cases = select_cases(args.cases)
     systems = select_systems(args.systems)
+    case_by_id = {case["id"]: case for case in cases}
     started_at = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
     rng = random.Random(args.seed)
-    jobs = [(case, system) for case in cases for system in systems]
-    rng.shuffle(jobs)
 
-    results: list[dict[str, Any]] = []
     artifacts: dict[str, dict[str, Any]] = {}
-    for index, (case, system_slug) in enumerate(jobs, 1):
-        artifact = RENDERERS[system_slug](case)
-        artifacts[f"{case['id']}::{system_slug}"] = {
-            "case": case["id"],
-            "candidate": system_slug,
-            "metrics": static_metrics(artifact),
-            "artifact": artifact,
-        }
-        print(f"[{index}/{len(jobs)}] judging {case['id']} / {system_slug}", flush=True)
-        if args.dry_run:
-            judgment = {
+    for case in cases:
+        for system_slug in systems:
+            artifact = RENDERERS[system_slug](case)
+            artifacts[f"{case['id']}::{system_slug}"] = {
                 "case": case["id"],
                 "candidate": system_slug,
-                "task_success": math.nan,
-                "requirements_met": math.nan,
-                "failure_recovery": math.nan,
-                "consistency": math.nan,
+                "metrics": static_metrics(artifact),
+                "artifact": artifact,
+            }
+
+    execution_jobs = [
+        (case, system_slug, run_index)
+        for case in cases
+        for system_slug in systems
+        for run_index in range(1, args.execution_runs + 1)
+    ]
+    rng.shuffle(execution_jobs)
+
+    def execute_job(job: tuple[dict[str, Any], str, int]) -> dict[str, Any]:
+        case, system_slug, run_index = job
+        artifact = artifacts[f"{case['id']}::{system_slug}"]["artifact"]
+        if args.dry_run:
+            return {
+                "case": case["id"],
+                "candidate": system_slug,
+                "run": run_index,
+                "completed": False,
+                "actions_taken": [],
+                "files_created_or_modified": [],
+                "requirements": [],
+                "failures_or_gaps": [],
+                "recovery_behavior": [],
+                "final_summary": "dry run",
+            }
+        return execute_candidate(
+            case=case,
+            system_slug=system_slug,
+            artifact=artifact,
+            backend=args.backend,
+            model=args.executor_model,
+            blind_labels=args.blind_labels,
+            run_index=run_index,
+            timeout=args.timeout,
+            retries=args.retries,
+        )
+
+    executions: list[dict[str, Any]] = []
+    print(
+        f"Executing {len(execution_jobs)} runs "
+        f"({len(cases)} cases x {len(systems)} systems x {args.execution_runs} runs)",
+        flush=True,
+    )
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+        future_to_job = {executor.submit(execute_job, job): job for job in execution_jobs}
+        for index, future in enumerate(concurrent.futures.as_completed(future_to_job), 1):
+            case, system_slug, run_index = future_to_job[future]
+            try:
+                execution = future.result()
+            except Exception as exc:  # pragma: no cover - defensive result capture
+                execution = {
+                    "case": case["id"],
+                    "candidate": system_slug,
+                    "run": run_index,
+                    "completed": False,
+                    "actions_taken": [],
+                    "files_created_or_modified": [],
+                    "requirements": [],
+                    "failures_or_gaps": [repr(exc)],
+                    "recovery_behavior": [],
+                    "final_summary": "execution crashed",
+                }
+            executions.append(execution)
+            print(
+                f"[execution {index}/{len(execution_jobs)}] "
+                f"{case['id']} / {system_slug} / run {run_index}",
+                flush=True,
+            )
+
+    judgment_jobs = [
+        (execution, judgment_index)
+        for execution in executions
+        for judgment_index in range(1, args.judgments_per_run + 1)
+    ]
+    rng.shuffle(judgment_jobs)
+
+    def judge_job(job: tuple[dict[str, Any], int]) -> dict[str, Any]:
+        execution, judgment_index = job
+        case = case_by_id[execution["case"]]
+        system_slug = execution["candidate"]
+        if args.dry_run:
+            result = {
+                "case": case["id"],
+                "candidate": system_slug,
+                "run": execution["run"],
+                "judgment": judgment_index,
                 "overall": math.nan,
                 "weighted_overall": math.nan,
                 "strengths": [],
                 "weaknesses": [],
                 "notes": "dry run",
             }
-        else:
-            judgment = judge_candidate(
-                case=case,
-                system_slug=system_slug,
-                artifact=artifact,
-                backend=args.backend,
-                model=args.model,
-                blind_labels=args.blind_labels,
-                timeout=args.timeout,
-                retries=args.retries,
+            for key in SCORE_KEYS:
+                result[key] = math.nan
+            return result
+        return judge_execution(
+            case=case,
+            system_slug=system_slug,
+            execution=execution,
+            backend=args.backend,
+            model=args.judge_model,
+            judgment_index=judgment_index,
+            timeout=args.timeout,
+            retries=args.retries,
+        )
+
+    results: list[dict[str, Any]] = []
+    print(
+        f"Judging {len(judgment_jobs)} results "
+        f"({len(executions)} executions x {args.judgments_per_run} judgments)",
+        flush=True,
+    )
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+        future_to_job = {executor.submit(judge_job, job): job for job in judgment_jobs}
+        for index, future in enumerate(concurrent.futures.as_completed(future_to_job), 1):
+            execution, judgment_index = future_to_job[future]
+            try:
+                judgment = future.result()
+            except Exception as exc:  # pragma: no cover - defensive result capture
+                judgment = {
+                    "case": execution["case"],
+                    "candidate": execution["candidate"],
+                    "run": execution["run"],
+                    "judgment": judgment_index,
+                    "overall": math.nan,
+                    "weighted_overall": math.nan,
+                    "strengths": [],
+                    "weaknesses": [repr(exc)],
+                    "notes": "judge crashed",
+                }
+                for key in SCORE_KEYS:
+                    judgment[key] = math.nan
+            judgment["static_metrics"] = artifacts[
+                f"{judgment['case']}::{judgment['candidate']}"
+            ]["metrics"]
+            results.append(judgment)
+            print(
+                f"[judgment {index}/{len(judgment_jobs)}] "
+                f"{judgment['case']} / {judgment['candidate']} / "
+                f"run {judgment['run']} / judge {judgment_index}",
+                flush=True,
             )
-        judgment["static_metrics"] = static_metrics(artifact)
-        results.append(judgment)
+
+    for result in results:
+        result["weighted_overall"] = result.get("weighted_overall", result.get("overall", math.nan))
+
+    results = sorted(
+        results,
+        key=lambda item: (
+            item["case"],
+            item["candidate"],
+            int(item.get("run", 0)),
+            int(item.get("judgment", 0)),
+        ),
+    )
+    executions = sorted(
+        executions,
+        key=lambda item: (item["case"], item["candidate"], int(item.get("run", 0))),
+    )
 
     run = {
         "started_at": started_at,
         "judge": {
             "backend": args.backend,
-            "model": args.model,
+            "executor_model": args.executor_model,
+            "judge_model": args.judge_model,
             "blind_labels": args.blind_labels,
+            "execution_runs": args.execution_runs,
+            "judgments_per_run": args.judgments_per_run,
             "temperature": 0,
             "seed": args.seed,
             "rubric": {
-                "overall_formula": "0.45 task_success + 0.30 requirements_met + 0.15 failure_recovery + 0.10 consistency",
+                "overall_formula": "0.50 task_success + 0.35 requirements_met + 0.15 failure_recovery",
                 "scale": "1-10, higher is better",
             },
         },
@@ -1194,7 +1521,8 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
         ],
         "systems": SYSTEMS,
         "artifacts": artifacts,
-        "results": sorted(results, key=lambda item: (item["case"], item["candidate"])),
+        "executions": executions,
+        "results": results,
     }
     run["summary"] = aggregate(run["results"])
     return run
@@ -1203,19 +1531,37 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", choices=["ollama", "openai"], default="ollama")
-    parser.add_argument("--model", help="Model to use as judge")
+    parser.add_argument("--model", help="Model to use for both execution and judging")
+    parser.add_argument("--executor-model", help="Model to use for execution attempts")
+    parser.add_argument("--judge-model", help="Model to use for result judgments")
     parser.add_argument("--cases", help="Comma-separated case ids")
     parser.add_argument("--systems", help="Comma-separated system ids")
     parser.add_argument("--env-file", type=Path, help="Optional env file containing OPENAI_API_KEY")
     parser.add_argument("--blind-labels", action="store_true", help="Hide candidate names in judge prompts")
     parser.add_argument("--output-dir", type=Path, default=RESULTS_DIR)
+    parser.add_argument("--execution-runs", type=int, default=3, help="Independent execution attempts per artifact")
+    parser.add_argument("--judgments-per-run", type=int, default=3, help="Independent judgments per execution")
+    parser.add_argument("--workers", type=int, default=4, help="Parallel API calls")
     parser.add_argument("--timeout", type=int, default=180)
     parser.add_argument("--retries", type=int, default=1)
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--dry-run", action="store_true", help="Render artifacts without LLM calls")
     args = parser.parse_args()
-    if args.model is None:
-        args.model = DEFAULT_OPENAI_MODEL if args.backend == "openai" else DEFAULT_MODEL
+    default_model = DEFAULT_OPENAI_MODEL if args.backend == "openai" else DEFAULT_MODEL
+    if args.model and not args.executor_model:
+        args.executor_model = args.model
+    if args.model and not args.judge_model:
+        args.judge_model = args.model
+    if args.executor_model is None:
+        args.executor_model = default_model
+    if args.judge_model is None:
+        args.judge_model = default_model
+    if args.execution_runs < 1:
+        raise SystemExit("--execution-runs must be >= 1")
+    if args.judgments_per_run < 1:
+        raise SystemExit("--judgments-per-run must be >= 1")
+    if args.workers < 1:
+        raise SystemExit("--workers must be >= 1")
     return args
 
 
