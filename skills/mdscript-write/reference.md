@@ -28,13 +28,21 @@ disable-model-invocation: true
 
 | Element | Syntax | Role |
 |---------|--------|------|
-| State | `## Title` | One workflow step; fallthrough top-to-bottom |
+| State | `## Title` | One workflow step, fallthrough target, and `mdscript-exec` entry point |
 | Variable | `{{name}}` | Created on first mention; no declarations |
 | Branch/loop | `[Title](#title)` | Redirect flow to another state |
 | External call | `[Label](path/to/file.md)` | Run or read another MDScript or template |
 | Execution header | `<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](url) -->` | Points agent at the executor skill or execution spec |
 
 ## Control flow patterns
+
+**Cross-agent entry point**
+
+```markdown
+Tell another agent to continue this workflow at a specific heading:
+
+`/mdscript-exec .agents/skills/deploy-staging/SKILL.md#verify-deployment`
+```
 
 **Infer from input**
 

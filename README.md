@@ -108,6 +108,10 @@ No keywords, no operators, no formal syntax - just clear instructions.
 
 Every instruction in an MDScript file must be **executed**, not narrated. The LLM should perform the action using its available capabilities rather than describing what it would do. If an LLM cannot or does not carry out an instruction, it has failed to follow the script.
 
+Execution starts at the first `##` state unless the user asks to start from a specific heading. A heading entry point can be provided by name or as a Markdown anchor, such as `examples/deploy-branch.md#run-checks`.
+
+Heading entry points make MDScript useful for cross-agent handoffs: one agent can tell another to execute the same workflow from a precise state instead of replaying the whole script.
+
 ## Use Cases
 
 MDScript is designed for **version-controlled workflows** in repositories:
@@ -190,20 +194,20 @@ The latest probabilistic scripting benchmark compared MDScript with Guidance, LM
 
 ## Install the MDScript skills
 
-The **mdscript-exec** skill executes MDScript workflows. The **mdscript-write** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install them with the [skills CLI](https://github.com/vercel-labs/skills):
+The **mdscript-exec** skill executes MDScript workflows. The **mdscript-write** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install the repo with the [skills CLI](https://github.com/vercel-labs/skills) to get both skills:
 
 ```bash
 # List available skills in this repo
 npx skills add gabewillen/mdscript --list
 
-# Install to Cursor (project scope)
-npx skills add gabewillen/mdscript --skill mdscript-exec -a cursor -y
-npx skills add gabewillen/mdscript --skill mdscript-write -a cursor -y
+# Install both to Cursor (project scope)
+npx skills add gabewillen/mdscript -a cursor -y
 
-# Install globally
-npx skills add gabewillen/mdscript --skill mdscript-exec -a cursor -g -y
-npx skills add gabewillen/mdscript --skill mdscript-write -a cursor -g -y
+# Install both globally
+npx skills add gabewillen/mdscript -a cursor -g -y
 ```
+
+Use `--skill mdscript-exec` or `--skill mdscript-write` only when you want to install one skill by itself.
 
 Invoke `mdscript-write` with what you want the new skill to do:
 

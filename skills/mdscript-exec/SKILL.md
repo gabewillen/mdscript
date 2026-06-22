@@ -2,13 +2,13 @@
 name: mdscript-exec
 description: >-
   Execute MDScript Markdown workflows. Use when the user invokes /mdscript-exec,
-  asks to run an MDScript file, or a file header requires the mdscript-exec
-  skill.
+  asks to run an MDScript file, asks to start from a specific heading, or a file
+  header requires the mdscript-exec skill.
 disable-model-invocation: true
 metadata:
   author: gabewillen
   version: "1.0.0"
-  argument-hint: "<path or workflow request>"
+  argument-hint: "<path[#heading] or workflow request>"
 ---
 
 <!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
@@ -21,6 +21,7 @@ Execute the referenced MDScript workflow. Every instruction below must be **exec
 
 * if `{{workflow_path}}` is empty
   * infer `{{workflow_path}}` from the input
+  * infer `{{start_heading}}` from the input when the user specifies a heading or a `#heading` anchor
 
 * if `{{workflow_path}}` is still empty
   * ask the user for the MDScript file path
@@ -36,17 +37,31 @@ Execute the referenced MDScript workflow. Every instruction below must be **exec
 * if the top comment says to read an MDScript README and that README has not been read in this session
   * read the referenced README before executing the workflow
 
+* if `{{workflow_path}}` includes a `#heading` fragment
+  * move the fragment into `{{start_heading}}`
+  * remove the fragment from `{{workflow_path}}`
+  * read `{{workflow_path}}` again without the fragment if needed
+
 ## Parse Workflow
 
 * ignore YAML frontmatter, the execution header comment, and prose before the first `##` state
 
 * identify each `##` heading as a state
 
+* identify each state's Markdown anchor slug from its heading text
+
 * identify each bullet under a state as an instruction to execute
 
 * keep a table of `{{variables}}` encountered while executing the workflow
 
-* begin at the first state unless the user explicitly requested a different state
+* if `{{start_heading}}` is set
+  * find the state whose heading exactly matches `{{start_heading}}` or whose anchor slug matches `{{start_heading}}`
+  * if no state matches, report the available headings and ask the user for a valid heading
+    * [Parse Workflow](#parse-workflow)
+  * begin at the matching state
+
+* if `{{start_heading}}` is empty
+  * begin at the first state
 
 ## Execute State
 

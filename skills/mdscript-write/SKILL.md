@@ -3,7 +3,7 @@ name: mdscript-write
 description: >-
   Write Cursor Agent Skills whose SKILL.md body is executable MDScript. Use when
   the user invokes /mdscript-write, asks to create an mdscript skill, or wants a
-  repeatable agent workflow encoded as MDScript states in a skill file.
+  repeatable agent workflow with cross-agent heading entry points.
 disable-model-invocation: true
 metadata:
   author: gabewillen
@@ -55,11 +55,16 @@ Every instruction below must be **executed**, not narrated.
 ## Design Workflow
 
 * for each state in `{{workflow_states}}`, draft bullet instructions using MDScript conventions:
-  * `##` headings as sequential states (fallthrough unless redirected)
+  * `##` headings as sequential states (fallthrough unless redirected) and stable entry points for `mdscript-exec`
   * `{{variables}}` for values inferred, set, or read from input — no declarations
   * `[State Title](#state-title)` for branches, loops, and retries
   * file paths in backticks for `[External Script](path/to/script.md)` and `[Template](path/to/template.md)` calls
   * natural language only — no formal keywords beyond headings, variables, and links
+
+* treat `##` headings as cross-agent communication targets:
+  * another agent can be told to execute a workflow from a specific heading with `/mdscript-exec path/to/workflow.md#heading-anchor`
+  * make headings durable, descriptive, and safe to reference from another thread or agent handoff
+  * avoid headings that depend on temporary wording, hidden context, or ambiguous duplicate names
 
 * include guard states when useful:
   * empty-input inference from user message
@@ -113,6 +118,7 @@ disable-model-invocation: true
 * confirm the MDScript body:
   * starts with the execution header comment requiring `mdscript-exec` or reading the MDScript README
   * uses `##` states that match the approved outline
+  * uses durable heading names that can be used as `mdscript-exec` entry points
   * branches and loops use markdown anchor links, not prose-only jumps
   * every bullet is actionable and executable
 
@@ -121,6 +127,7 @@ disable-model-invocation: true
 * tell the user:
   * skill path: `{{skill_dir}}/SKILL.md`
   * invoke with: `/{{skill_name}} <input>`
+  * entry from a heading: `/mdscript-exec {{skill_dir}}/SKILL.md#heading-anchor`
   * optional supporting files created
   * to publish: push to GitHub, then `npx skills add <owner>/<repo> --skill {{skill_name}} -a cursor`
 
