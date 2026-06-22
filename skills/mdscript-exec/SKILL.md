@@ -1,99 +1,80 @@
 ---
 name: mdscript-exec
 description: >-
-  Execute MDScript Markdown workflows. Use when the user invokes /mdscript-exec,
-  asks to run an MDScript file, asks to start from a specific heading, or a file
-  header requires the mdscript-exec skill.
-disable-model-invocation: true
-metadata:
-  author: gabewillen
-  version: "1.0.0"
-  argument-hint: "<path[#heading] or workflow request>"
+  Execute MDScript Markdown workflows. Use when the user invokes
+  /mdscript-exec, asks to run an MDScript file, asks to start from a specific
+  heading, or a file header requires the mdscript-exec skill.
 ---
-
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
 
 # MDScript Executor
 
-Execute the referenced MDScript workflow. Every instruction below must be **executed**, not narrated.
+Use this skill as the bootstrap executor for MDScript. Do not interpret this
+SKILL.md as MDScript; these are normal skill instructions for executing other
+Markdown workflow files that use MDScript syntax.
 
-## Load Workflow
+## Inputs
 
-* if `{{workflow_path}}` is empty
-  * infer `{{workflow_path}}` from the input
-  * infer `{{start_heading}}` from the input when the user specifies a heading or a `#heading` anchor
+Accept any of these forms:
 
-* if `{{workflow_path}}` is still empty
-  * ask the user for the MDScript file path
-  * [Load Workflow](#load-workflow)
+- `/mdscript-exec path/to/workflow.md`
+- `/mdscript-exec path/to/workflow.md#heading-anchor`
+- natural language that names a workflow file and, optionally, a heading to
+  start from
 
-* read `{{workflow_path}}`
+If the workflow path is missing or ambiguous, ask for the path. If a heading is
+provided, store it as the requested start state.
 
-* if the file is missing
-  * report that `{{workflow_path}}` was not found
-  * ask the user for a different path
-  * [Load Workflow](#load-workflow)
+## Load The Workflow
 
-* if the top comment says to read an MDScript README and that README has not been read in this session
-  * read the referenced README before executing the workflow
+Read the workflow file. If the path contains a `#fragment`, strip the fragment
+from the file path and use the fragment as the requested heading or anchor.
 
-* if `{{workflow_path}}` includes a `#heading` fragment
-  * move the fragment into `{{start_heading}}`
-  * remove the fragment from `{{workflow_path}}`
-  * read `{{workflow_path}}` again without the fragment if needed
+If the workflow header says to use `mdscript-exec` or read an MDScript README,
+and the MDScript rules are not already clear in this session, read the linked
+README before executing the workflow.
 
-## Parse Workflow
+## Parse States
 
-* ignore YAML frontmatter, the execution header comment, and prose before the first `##` state
+Ignore YAML frontmatter, the execution header comment, and prose before the
+first `##` heading.
 
-* identify each `##` heading as a state
+Treat each `##` heading as a state. The state body continues until the next
+`##` heading or end of file. Treat bullets under a state as executable
+instructions.
 
-* identify each state's Markdown anchor slug from its heading text
+Compute a Markdown anchor slug for each state heading using the normal
+lowercase, hyphenated heading text convention. If the user requested a start
+heading, match it against either the literal heading text or the anchor slug. If
+there is no match, list the available headings and ask for a valid starting
+heading instead of silently starting at the top.
 
-* identify each bullet under a state as an instruction to execute
+When no start heading is requested, begin at the first state.
 
-* keep a table of `{{variables}}` encountered while executing the workflow
+## Execute States
 
-* if `{{start_heading}}` is set
-  * find the state whose heading exactly matches `{{start_heading}}` or whose anchor slug matches `{{start_heading}}`
-  * if no state matches, report the available headings and ask the user for a valid heading
-    * [Parse Workflow](#parse-workflow)
-  * begin at the matching state
+Execute each instruction in the current state in order. Maintain state for
+MDScript variables such as `{{service_name}}` across the workflow.
 
-* if `{{start_heading}}` is empty
-  * begin at the first state
+Perform actions directly with available tools. Do not narrate that an action
+would be performed. If an instruction says to infer, ask, read, create, edit,
+run, verify, notify, or report something, do that action.
 
-## Execute State
+Follow Markdown links to state anchors when the surrounding condition applies.
+Use those links for branches, retries, and loops. Follow Markdown links to other
+files by reading or executing the linked file according to the instruction text.
 
-* execute each instruction in the current state in order using available tools
+If a required value is missing and cannot be inferred safely, ask the user for
+that value and continue from the current state.
 
-* when an instruction says to infer, ask, read, create, edit, run, verify, notify, or report something, perform that action directly
+If a command or validation step fails and the workflow gives a linked recovery
+state, follow that recovery link. If no recovery is specified, stop and report
+the failed command or validation, the relevant output, and the current state.
 
-* when an instruction sets a `{{variable}}`, remember the value for later states
+When the current state completes without a branch, continue to the next state in
+file order. Stop when there are no more states.
 
-* when an instruction contains a Markdown link to another state, follow that link if the condition for that instruction applies
+## Report Completion
 
-* when an instruction contains a Markdown link to another file, read or execute that file according to the instruction text
-
-* if a required value is missing and cannot be inferred safely
-  * ask the user for the missing value
-  * [Execute State](#execute-state)
-
-* if a command or validation step fails and the workflow specifies a linked recovery state
-  * follow the recovery link
-
-* if a command or validation step fails and the workflow does not specify recovery
-  * stop and report the failure with the command, relevant output, and current state
-
-## Advance
-
-* if execution followed a state link
-  * set the current state to the linked state
-  * [Execute State](#execute-state)
-
-* if there is another state after the current state
-  * set the current state to the next state
-  * [Execute State](#execute-state)
-
-* if there are no more states
-  * report the completed workflow, files changed, commands run, and any validation results
+At the end, summarize the workflow completed, files changed, commands run, and
+validation results. Mention any skipped optional branches or unresolved
+follow-ups.
