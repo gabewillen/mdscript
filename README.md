@@ -64,9 +64,12 @@ examples see `examples/`, and for the execution rules see **[spec.md](spec.md)**
 * **Minimal syntax** - Only headings, variables, and links have special meaning
 * **Human readable** - Developers can understand and modify workflows
 * **LLM executable** - Structure is simple enough for consistent interpretation
+* **Intentionally probabilistic** - Execution is LLM interpretation, not deterministic parsing
 * **Version controlled** - Workflows live in the repository alongside code
 
 MDScript bridges human readability with machine executability by keeping structure minimal and relying on LLM language understanding for everything else.
+
+MDScript is intentionally probabilistic. There is no parser or runtime enforcing exact semantics. An LLM reads the instructions and carries them out, so two runs can vary the way two capable engineers following the same runbook might. That is the deliberate trade: you give up bit-exact determinism to gain a format anyone can read and write with nothing to memorize. Reach for MDScript when you want an agent's judgment at each step, and reach for ordinary code when a task must run identically every time. It is also why the benchmarks below score produced outcomes against a checklist rather than asserting deterministic output.
 
 ## Benchmarks
 
