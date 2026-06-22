@@ -398,7 +398,7 @@ def actions_comment(actions: list[str], indent: str = "    ") -> str:
 
 def render_mdscript(case: dict[str, Any]) -> str:
     chunks = [
-        "<!-- read [mdscript.md](../../README.md) -->",
+        "<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](../../README.md) -->",
         f"# {case['name']}",
         "",
         numbered_requirements(case),

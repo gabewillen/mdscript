@@ -9,7 +9,7 @@ description: Third-person WHAT and WHEN. Include trigger terms and /my-workflow.
 disable-model-invocation: true
 ---
 
-<!-- read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
 
 ## Setup
 
@@ -32,7 +32,7 @@ disable-model-invocation: true
 | Variable | `{{name}}` | Created on first mention; no declarations |
 | Branch/loop | `[Title](#title)` | Redirect flow to another state |
 | External call | `[Label](path/to/file.md)` | Run or read another MDScript or template |
-| Version header | `<!-- read [mdscript.md](url) -->` | Points agent at the execution spec |
+| Execution header | `<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](url) -->` | Points agent at the executor skill or execution spec |
 
 ## Control flow patterns
 

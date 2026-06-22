@@ -1,8 +1,8 @@
 ---
-name: mdscript
+name: mdscript-write
 description: >-
   Write Cursor Agent Skills whose SKILL.md body is executable MDScript. Use when
-  the user invokes /mdscript, asks to create an mdscript skill, or wants a
+  the user invokes /mdscript-write, asks to create an mdscript skill, or wants a
   repeatable agent workflow encoded as MDScript states in a skill file.
 disable-model-invocation: true
 metadata:
@@ -11,15 +11,15 @@ metadata:
   argument-hint: "<what the skill should accomplish>"
 ---
 
-<!-- read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
 
-# MDScript Skill Author
+# MDScript Skill Writer
 
-Accept `/mdscript <purpose>` or natural language after invoking this skill. Treat the remainder as `{{skill_purpose}}`.
+Accept `/mdscript-write <purpose>` or natural language after invoking this skill. Treat the remainder as `{{skill_purpose}}`.
 
 Examples:
-- `/mdscript deploy a branch to staging with health checks`
-- `/mdscript onboard a new microservice from the service template`
+- `/mdscript-write deploy a branch to staging with health checks`
+- `/mdscript-write onboard a new microservice from the service template`
 - `mdscript skill for generating release notes from git history`
 
 Every instruction below must be **executed**, not narrated.
@@ -86,7 +86,7 @@ description: {{skill_description}}
 disable-model-invocation: true
 ---
 
-<!-- read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
 
 ## First State Title
 
@@ -96,7 +96,7 @@ disable-model-invocation: true
 * …workflow instructions…
 ```
 
-* use the **GitHub raw mdscript link** in the version header so the skill works when copied to personal skills or other repos
+* use the **GitHub raw mdscript link** in the execution header so the skill works when copied to personal skills or other repos
 
 * set `disable-model-invocation: true` unless the user explicitly wants ambient auto-discovery
 
@@ -111,7 +111,7 @@ disable-model-invocation: true
 * confirm `{{skill_dir}}/SKILL.md` has valid YAML frontmatter (`name`, `description`)
 
 * confirm the MDScript body:
-  * starts with the version header comment
+  * starts with the execution header comment requiring `mdscript-exec` or reading the MDScript README
   * uses `##` states that match the approved outline
   * branches and loops use markdown anchor links, not prose-only jumps
   * every bullet is actionable and executable

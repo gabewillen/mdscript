@@ -1,18 +1,25 @@
 # MDScript
 
+<!--
+<mdscript>
+  <required-executor>mdscript-exec</required-executor>
+  <fallback>read this README</fallback>
+</mdscript>
+-->
+
 ## What is MDScript?
 
 MDScript is a minimal scripting format for guiding LLMs in coding assistants like Cursor and Claude Code. It uses plain Markdown with just enough structure to create reliable, repeatable workflows.
 
-## Version Header
+## Execution Header
 
-Every MDScript file should include a version comment near the top referencing this specification:
+Every MDScript file must include an execution comment near the top requiring the executor skill first, with this specification as the fallback:
 
 ```markdown
-<!-- read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
 ```
 
-The path should be a relative path to this README or a link to the raw file on `github.com/gabewillen/mdscript`. This tells the LLM where to find the execution specification, enabling version evolution without breaking existing scripts.
+The path should be a relative path to this README or a link to the raw file on `github.com/gabewillen/mdscript`. This tells the LLM to use the installed `mdscript-exec` skill when available, or to read this execution specification directly when the skill is unavailable.
 
 ## Core Elements
 
@@ -181,28 +188,35 @@ The latest probabilistic scripting benchmark compared MDScript with Guidance, LM
 | 3 | ell | 9.65 | 9.78 | 9.63 | 9.30 | 0.37 | 27 |
 | 4 | LMQL | 9.65 | 9.81 | 9.56 | 9.30 | 0.39 | 27 |
 
-## Install the `/mdscript` skill
+## Install the MDScript skills
 
-The **mdscript** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install it with the [skills CLI](https://github.com/vercel-labs/skills):
+The **mdscript-exec** skill executes MDScript workflows. The **mdscript-write** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install them with the [skills CLI](https://github.com/vercel-labs/skills):
 
 ```bash
 # List available skills in this repo
 npx skills add gabewillen/mdscript --list
 
 # Install to Cursor (project scope)
-npx skills add gabewillen/mdscript --skill mdscript -a cursor -y
+npx skills add gabewillen/mdscript --skill mdscript-exec -a cursor -y
+npx skills add gabewillen/mdscript --skill mdscript-write -a cursor -y
 
 # Install globally
-npx skills add gabewillen/mdscript --skill mdscript -a cursor -g -y
+npx skills add gabewillen/mdscript --skill mdscript-exec -a cursor -g -y
+npx skills add gabewillen/mdscript --skill mdscript-write -a cursor -g -y
 ```
 
-Then invoke it with what you want the new skill to do:
+Invoke `mdscript-write` with what you want the new skill to do:
 
 ```
-/mdscript deploy a branch to staging with health checks
-/mdscript onboard a new microservice from the service template
+/mdscript-write deploy a branch to staging with health checks
+/mdscript-write onboard a new microservice from the service template
 ```
 
 <!-- installable skills under skills/ matching npx skills add discovery -->
 
-The skill lives at `skills/mdscript/`. To publish your own installable skills, place them under `skills/<name>/SKILL.md` in a GitHub repo so others can run `npx skills add <owner>/<repo>`.
+Installable skills:
+
+- `mdscript-exec` lives at `skills/mdscript-exec/` and executes MDScript workflows.
+- `mdscript-write` lives at `skills/mdscript-write/` and authors MDScript-backed Agent Skills.
+
+To publish your own installable skills, place them under `skills/<name>/SKILL.md` in a GitHub repo so others can run `npx skills add <owner>/<repo>`.
