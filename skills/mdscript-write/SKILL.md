@@ -84,7 +84,7 @@ name: {{skill_name}}
 description: {{skill_description}}
 ---
 
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/spec.md) -->
 
 ## First State Title
 
@@ -94,8 +94,8 @@ description: {{skill_description}}
 * ...workflow instructions...
 ```
 
-Use the GitHub raw README link in the execution header for publishable skills so
-the workflow still works when copied into another repo or personal skill folder.
+Use the GitHub raw `spec.md` link in the execution header for publishable skills
+so the workflow still works when copied into another repo or personal skill folder.
 
 If the workflow needs templates, examples, or helper scripts, create them under
 the generated skill directory and link to them from the MDScript body.
@@ -106,7 +106,7 @@ Confirm the generated skill has:
 
 - valid YAML frontmatter with `name` and `description`
 - the MDScript execution header requiring `mdscript-exec` or reading the
-  MDScript README
+  MDScript spec
 - `##` states that match the approved outline
 - durable heading names that can be used as `mdscript-exec` entry points
 - Markdown anchor links for branches and loops

@@ -1,9 +1,9 @@
-# Robust Scripting Benchmark — Results
+# Robust Scripting Benchmark Results
 
 - Executor: `claude-haiku` (neutral; MDScript runs also read the spec)
 - Judge: `claude-sonnet` (blind: sees only the produced trace, never the artifact or system name)
 - Scenarios: 16 branch-forcing scenarios across 3 cases; REPEATS=2 → 32 runs/system, 128 total
-- Primary metric: deterministic checklist coverage (observable behaviors). Secondary: blind judge 1–10.
+- Primary metric: deterministic checklist coverage (observable behaviors). Secondary: blind judge 1-10.
 
 ## Overall
 

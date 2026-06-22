@@ -1,4 +1,4 @@
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](../README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](../spec.md) -->
 
 ## Gather Changes
 
@@ -10,9 +10,9 @@
 ## Categorize Commits
 
 * group commits into categories:
-  * `{{features}}` — commits matching "feat:" or "feature:"
-  * `{{fixes}}` — commits matching "fix:" or "bug:"
-  * `{{chores}}` — everything else
+  * `{{features}}`: commits matching "feat:" or "feature:"
+  * `{{fixes}}`: commits matching "fix:" or "bug:"
+  * `{{chores}}`: everything else
 
 ## Generate Notes
 

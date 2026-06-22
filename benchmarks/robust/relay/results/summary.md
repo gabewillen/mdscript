@@ -1,6 +1,6 @@
-# Jump-Point (Relay) Benchmark — Summary
+# Jump-Point (Relay) Benchmark Summary
 
-Workflow: deploy_branch. Pattern: multi-hop relay — each hop is a worker agent dispatched to
+Workflow: deploy_branch. Pattern: multi-hop relay, where each hop is a worker agent dispatched to
 resume the shared workflow at one state with injected variables. Executor: claude-haiku.
 
 ## The three metrics
@@ -24,6 +24,6 @@ resume the shared workflow at one state with injected variables. Executor: claud
 ## Key findings
 
 - **Jump failures: 0.** Every format correctly entered at the requested state, did not re-run earlier states, and did not re-ask for injected variables. The delegation primitive works.
-- **Handoff correctness is a statistical tie** (~86–88%); remaining check misses were symmetric executor output-formatting quirks, not jump failures. MDScript does not *execute* the relay better.
+- **Handoff correctness is a statistical tie** (~86-88%); remaining check misses were symmetric executor output-formatting quirks, not jump failures. MDScript does not *execute* the relay better.
 - **The differentiator is cost, not runtime.** MDScript needs **+0** lines to be dispatchable (headings are already entry points); the DSLs need **+34 to +42** lines of dispatch plumbing (≈ doubling the file).
-- **That plumbing hurts readability.** With it, MDScript leads the blind panel **9.00 (unanimous)** vs ell 7.29, guidance/lmql 6.43 — a ~+2 gap, up from a near-tie on the linear versions. LMQL fell the most (7.86 → 6.43).
+- **That plumbing hurts readability.** With it, MDScript leads the blind panel **9.00 (unanimous)** vs ell 7.29, guidance/lmql 6.43, a ~+2 gap, up from a near-tie on the linear versions. LMQL fell the most (7.86 → 6.43).

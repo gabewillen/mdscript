@@ -1,4 +1,4 @@
-<!-- Before executing, read the MDScript spec that defines how to run this file: [README.md](../../../../README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](../../../../spec.md) -->
 # Onboard Service
 
 Interactively scaffold a new service from language, stack, and deployment choices.
@@ -24,13 +24,13 @@ Interactively scaffold a new service from language, stack, and deployment choice
 
 ## Pick Stack
 
-* ask for a database: PostgreSQL, SQLite, or none — set `{{database}}`
-* ask for messaging: Kafka, NATS, or none — set `{{messaging}}`
+* ask for a database: PostgreSQL, SQLite, or none, and set `{{database}}`
+* ask for messaging: Kafka, NATS, or none, and set `{{messaging}}`
 * ask whether to use an HTTP framework or a raw server
 
 ## Configure Deployment
 
-* ask for a deployment target: Kubernetes, Lambda, or Docker Compose — set `{{deploy_target}}`
+* ask for a deployment target: Kubernetes, Lambda, or Docker Compose, and set `{{deploy_target}}`
 
 * if `{{deploy_target}}` is Kubernetes, ask whether a Helm chart is needed
 * if `{{deploy_target}}` is Lambda, ask for `{{memory_size}}` in MB

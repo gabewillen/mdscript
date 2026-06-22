@@ -1,4 +1,4 @@
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](../README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](../spec.md) -->
 
 ## Choose Function
 

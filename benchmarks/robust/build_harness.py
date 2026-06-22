@@ -5,7 +5,7 @@ Keeping the harness generated (rather than hand-edited) guarantees the embedded
 scenario data never drifts from scenarios/*.json.
 
 Modes:
-  --mode spec   MDScript executor is given the README execution spec (default).
+  --mode spec   MDScript executor is given the spec.md execution spec (default).
   --mode skill  MDScript executor is given the mdscript-exec SKILL (it "has the
                 skill available"). Code systems are identical across modes.
 """
@@ -42,14 +42,14 @@ def main():
 
     CONFIG = {
         "mode": args.mode,
-        "readme": str(ROOT / "README.md"),
+        "readme": str(ROOT / "spec.md"),
         "mdscript_skill": skill_text,
         "systems": SYSTEMS,
         "cases": cfg_cases,
     }
 
     name = "robust-scripting-bench" + ("-skill" if args.mode == "skill" else "")
-    desc = ("Robust LLM-scripting benchmark (" + ("MDScript executor uses the mdscript-exec SKILL" if args.mode == "skill" else "MDScript executor reads the README spec") + ")")
+    desc = ("Robust LLM-scripting benchmark (" + ("MDScript executor uses the mdscript-exec SKILL" if args.mode == "skill" else "MDScript executor reads spec.md") + ")")
 
     harness = TEMPLATE
     harness = harness.replace("__NAME__", name)
@@ -170,7 +170,7 @@ Record a TRACE of what ACTUALLY happens in this run:
 - final_outcome: one short sentence on how the run ended.`
 }
 
-const judgePrompt = (kase, scenario, trace) => `You are judging ONE produced workflow execution result. You do NOT see the source artifact or its language/format — score only the produced trace against the task. Reward correct, complete handling of the scenario's branches; penalize missing or wrong behavior.
+const judgePrompt = (kase, scenario, trace) => `You are judging ONE produced workflow execution result. You do NOT see the source artifact or its language/format. Score only the produced trace against the task. Reward correct, complete handling of the scenario's branches; penalize missing or wrong behavior.
 
 Goal: ${kase.goal}
 Scenario intent: ${scenario.description}

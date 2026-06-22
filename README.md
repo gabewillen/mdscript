@@ -3,7 +3,7 @@
 <!--
 <mdscript>
   <required-executor>mdscript-exec</required-executor>
-  <fallback>read this README</fallback>
+  <fallback>read spec.md</fallback>
 </mdscript>
 -->
 
@@ -11,106 +11,33 @@
 
 MDScript is a minimal scripting format for guiding LLMs in coding assistants like Cursor and Claude Code. It uses plain Markdown with just enough structure to create reliable, repeatable workflows.
 
-## Execution Header
+## How MDScript works
 
-Every MDScript file must include an execution comment near the top requiring the executor skill first, with this specification as the fallback:
-
-```markdown
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
-```
-
-The path should be a relative path to this README or a link to the raw file on `github.com/gabewillen/mdscript`. This tells the LLM to use the installed `mdscript-exec` skill when available, or to read this execution specification directly when the skill is unavailable.
-
-## Core Elements
-
-### 1. States (Headings)
-
-Each `##` heading defines a step in the workflow:
+Three things have special meaning: `##` headings are states, `{{variables}}` are
+filled in as the workflow runs, and Markdown links jump between states or into
+other files. Everything else is plain natural-language instructions the LLM
+**executes** (not narrates). States run top-to-bottom unless a link redirects.
 
 ```markdown
-## Setup Product Name
-## Create Feature File
+## Select Branch
+
+* if `{{branch}}` is empty
+  * ask the user which branch to deploy
+  * [Select Branch](#select-branch)
+
+## Run Checks
+* run `npm run typecheck`
+  * if it fails, stop and report the errors
 ```
 
-States execute sequentially (fallthrough) unless explicitly redirected.
-
-### 2. Variables
-
-Variables use double curly braces:
+The full execution rules (variables, links, control flow, heading entry points,
+composition across files, and the "execute, don't narrate" contract) live in
+**[spec.md](spec.md)**. MDScript files point an executor at the spec with a header
+comment:
 
 ```markdown
-{{product_name}}
-{{feature_path}}
-{{use_cases}}
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/spec.md) -->
 ```
-
-No declarations needed - variables are created when first mentioned.
-
-### 3. Links
-
-Markdown links navigate between states:
-
-```markdown
-[Setup Feature Name](#setup-feature-name)
-```
-
-Links enable loops, branches, and early exits.
-
-### 4. External Calls
-
-Reference other scripts or templates:
-
-```markdown
-[Generate Product](.cursor/commands/generate-product.md)
-[Feature Template](.cursor/templates/feature.template.md)
-```
-
-## Control Flow
-
-**Fallthrough**: States execute top-to-bottom unless a link redirects flow.
-
-**Branching**: Use links for conditional navigation.
-
-**Loops**: Link back to the current or previous state.
-
-**Example**:
-
-```markdown
-## Setup Feature Name
-
-* if `{{feature_name}}` is empty
-  * infer `{{feature_name}}` from the input
-
-* if `{{feature_path}}` already exists
-  * ask the user to provide a different feature name
-    * [Setup Feature Name](#setup-feature-name)
-
-## Create Feature File
-* create the feature file
-```
-
-## Natural Language
-
-Everything except headings, variables, and links is written in natural language. The LLM interprets instructions using its language understanding:
-
-```markdown
-* if `{{product_path}}` doesn't exist
-  * create `{{product_path}}` directory
-  
-* infer `{{use_cases}}` list from the input
-
-* ask the user if they want to continue
-```
-
-No keywords, no operators, no formal syntax - just clear instructions.
-
-## Execution
-
-Every instruction in an MDScript file must be **executed**, not narrated. The LLM should perform the action using its available capabilities rather than describing what it would do. If an LLM cannot or does not carry out an instruction, it has failed to follow the script.
-
-Execution starts at the first `##` state unless the user asks to start from a specific heading. A heading entry point can be provided by name or as a Markdown anchor, such as `examples/deploy-branch.md#run-checks`.
-
-Heading entry points make MDScript useful for cross-agent handoffs: one agent can tell another to execute the same workflow from a precise state instead of replaying the whole script.
 
 ## Use Cases
 
@@ -127,47 +54,9 @@ MDScript is designed for **version-controlled workflows** in repositories:
     use-case.template.md
 ```
 
-Developers can read and edit these workflows as normal Markdown. AI assistants execute them to maintain consistency across the codebase.
-
-## Example
-
-```markdown
-## Generate Feature
-
-* if `{{product_name}}` is empty
-  * infer `{{product_name}}` from the input
-
-* set `{{product_path}}` to `.cursor/products/{{product_name}}`
-
-## Setup Product Path
-
-* if `{{product_path}}` doesn't exist
-  * get `{{product_path}}` from [Generate Product](.cursor/commands/generate-product.md)
-  * [Setup Feature Name](#setup-feature-name)
-
-* ask the user if they want to add the feature to `{{product_path}}`
-  * if yes [Setup Feature Name](#setup-feature-name)
-  * if no, ask the user to provide the product name
-    * [Setup Product Path](#setup-product-path)
-
-## Setup Feature Name
-
-* if `{{feature_name}}` is empty
-  * infer `{{feature_name}}` from the input
-
-* set `{{feature_path}}` to `{{product_path}}/features/{{feature_name}}`
-
-* if `{{feature_path}}` already exists
-  * ask the user to provide a different feature name
-    * [Setup Feature Name](#setup-feature-name)
-
-* create `{{feature_path}}` directory
-
-## Create Feature File
-
-* create `{{feature_name}}.feature.md` in `{{feature_path}}` 
-  adhering to [Feature Template](.cursor/templates/feature.template.md)
-```
+Developers can read and edit these workflows as normal Markdown. AI assistants
+execute them to maintain consistency across the codebase. For complete worked
+examples see `examples/`, and for the execution rules see **[spec.md](spec.md)**.
 
 ## Design Philosophy
 
@@ -191,15 +80,15 @@ models, and MDScript executions are given the spec so the format is judged with
 its manual. See `benchmarks/robust/README.md` for the full methodology and
 honest limitations (execution is stochastic; only the grading is deterministic).
 
-> An earlier `benchmarks/llm-scripting/` run reported a 9.65–9.73 ranking. On
+> An earlier `benchmarks/llm-scripting/` run reported a 9.65-9.73 ranking. On
 > re-running it those differences proved to be inside the noise floor (all four
 > systems within ~0.1 of each other, sub-1-standard-error gaps, rank order not
 > reproducible). It is kept for history; the results below supersede it.
 
-**Outcome correctness — deterministic checklist (primary), blind judge (secondary).**
+**Outcome correctness: deterministic checklist (primary), blind judge (secondary).**
 16 branch-forcing scenarios across three cases, two repeats each.
 
-| System | Checklist % | sd | Blind judge (1–10) |
+| System | Checklist % | sd | Blind judge (1-10) |
 | --- | ---: | ---: | ---: |
 | MDScript | 100 | 0 | 9.00 |
 | LMQL (idiomatic) | 100 | 0 | 8.66 |
@@ -207,11 +96,10 @@ honest limitations (execution is stochastic; only the grading is deterministic).
 | Guidance (idiomatic) | 95.8 | 18.2 | 8.28 |
 
 MDScript reaches the ceiling on the deterministic metric with nothing but the
-README spec, and leads the blind judge — a format you can fully learn in 90
-seconds drove correct branch/loop/recovery behavior as reliably as the
-code-hosted DSLs.
+spec, and leads the blind judge. A format you can fully learn in 90 seconds
+drove correct branch/loop/recovery behavior as reliably as the code-hosted DSLs.
 
-**Agent-to-agent delegation — the jump-point advantage (`benchmarks/robust/relay/`).**
+**Agent-to-agent delegation: the jump-point advantage (`benchmarks/robust/relay/`).**
 Every `##` heading is a stable entry point, so one agent can dispatch another to
 `workflow.md#heading` and resume a shared workflow mid-flow. A multi-hop relay
 (haiku workers dispatched to enter at each state with injected variables) shows:
@@ -223,13 +111,30 @@ Every `##` heading is a stable entry point, so one agent can dispatch another to
 | ell | +35 | 88% | 7.29 |
 | LMQL | +42 | 86% | 6.43 |
 
-Handoff correctness is a tie (zero jump failures across all formats) — MDScript
+Handoff correctness is a tie (zero jump failures across all formats). MDScript
 does not *execute* a relay better. The difference is cost: MDScript is
 dispatchable-at-a-state for free because headings are already addressable, while
-the DSLs need ~34–42 lines of dispatch plumbing (roughly doubling the file),
-which also drops their readability by 1–1.5 points in a blind panel. The
-headings are simultaneously the docs, the control flow, and the inter-agent call
-interface.
+the DSLs need ~34-42 lines of dispatch plumbing (roughly doubling the file),
+which also drops their readability by 1-1.5 points in a blind panel.
+
+**Composition: reusable sub-scripts via links (`benchmarks/robust/compose/`).**
+A Markdown link to another file means "execute that file," so workflows decompose
+into small reusable scripts. Two parent workflows share two sub-components
+(checks, deploy):
+
+| System | Wiring lines to reuse | Click-navigable refs (GitHub) | Compose correctness |
+| --- | ---: | ---: | ---: |
+| MDScript | **0** | **4/4 (100%)** | tie (~90-100%) |
+| Guidance | 8 | 0/4 (0%) | tie |
+| LMQL | 8 | 0/4 (0%) | tie |
+| ell | 8 | 0/4 (0%) | tie |
+
+Again execution is a tie: agents follow MDScript file-links and DSL imports
+equally well. The difference is that MDScript composes a shared sub-script with
+zero wiring (the link is the instruction) and the same links stay
+**click-navigable on GitHub** for a human, while DSL imports are not links in a
+code host. The headings and links are simultaneously the docs, the control flow,
+and the call interface, for both agents and people.
 
 ## Install the MDScript skills
 

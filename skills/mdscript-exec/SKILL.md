@@ -29,9 +29,9 @@ provided, store it as the requested start state.
 Read the workflow file. If the path contains a `#fragment`, strip the fragment
 from the file path and use the fragment as the requested heading or anchor.
 
-If the workflow header says to use `mdscript-exec` or read an MDScript README,
+If the workflow header says to use `mdscript-exec` or read the MDScript spec,
 and the MDScript rules are not already clear in this session, read the linked
-README before executing the workflow.
+spec (`spec.md`) before executing the workflow.
 
 ## Parse States
 

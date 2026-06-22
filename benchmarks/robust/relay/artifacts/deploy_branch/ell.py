@@ -1,4 +1,4 @@
-"""Deploy a branch — RELAY-ENABLED form.
+"""Deploy a branch. RELAY-ENABLED form.
 
 To let another agent dispatch execution to an arbitrary state (and resume with
 injected variables), each state is refactored into an independently-callable

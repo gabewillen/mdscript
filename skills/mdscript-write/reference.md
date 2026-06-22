@@ -9,7 +9,7 @@ description: Third-person WHAT and WHEN. Include trigger terms and /my-workflow.
 disable-model-invocation: true
 ---
 
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/spec.md) -->
 
 ## Setup
 
@@ -97,7 +97,7 @@ npx skills add owner/repo --skill <name> -a cursor -g -y   # global, non-interac
 
 ## Anti-patterns
 
-- Narrating instead of executing ("I would create…" — do it)
+- Narrating instead of executing (saying "I would create the file" instead of creating it)
 - Prose-only branching without anchor links
 - Declaring variables in a separate block
 - SKILL.md bodies over 500 lines without a `reference.md` split

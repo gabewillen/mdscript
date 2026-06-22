@@ -1,6 +1,6 @@
 export const meta = {
   name: 'robust-scripting-bench',
-  description: 'Robust LLM-scripting benchmark (MDScript executor reads the README spec)',
+  description: 'Robust LLM-scripting benchmark (MDScript executor reads spec.md)',
   phases: [
     { title: 'Execute', detail: 'haiku executes each artifact against each scenario' },
     { title: 'Score', detail: 'deterministic checklist grader + blind judge per execution' },
@@ -15,7 +15,7 @@ const REPEATS = 2
 
 const CONFIG = {
   "mode": "spec",
-  "readme": "/Users/gabrielwillen/VSCode/mdscript/README.md",
+  "readme": "/Users/gabrielwillen/VSCode/mdscript/spec.md",
   "mdscript_skill": null,
   "systems": [
     "mdscript",
@@ -973,7 +973,7 @@ Record a TRACE of what ACTUALLY happens in this run:
 - final_outcome: one short sentence on how the run ended.`
 }
 
-const judgePrompt = (kase, scenario, trace) => `You are judging ONE produced workflow execution result. You do NOT see the source artifact or its language/format — score only the produced trace against the task. Reward correct, complete handling of the scenario's branches; penalize missing or wrong behavior.
+const judgePrompt = (kase, scenario, trace) => `You are judging ONE produced workflow execution result. You do NOT see the source artifact or its language/format. Score only the produced trace against the task. Reward correct, complete handling of the scenario's branches; penalize missing or wrong behavior.
 
 Goal: ${kase.goal}
 Scenario intent: ${scenario.description}

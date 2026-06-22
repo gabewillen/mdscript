@@ -81,7 +81,7 @@ PLAN = {
     ],
 }
 
-CONFIG = {"skill": SKILL, "readme": str(ROOT / "README.md"), "plan": PLAN, "systems": ["mdscript", "guidance", "lmql", "ell"]}
+CONFIG = {"skill": SKILL, "readme": str(ROOT / "spec.md"), "plan": PLAN, "systems": ["mdscript", "guidance", "lmql", "ell"]}
 
 TEMPLATE = r'''export const meta = {
   name: 'relay-jumppoint-bench',

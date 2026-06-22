@@ -1,4 +1,4 @@
-"""Deploy a branch — RELAY-ENABLED form.
+"""Deploy a branch. RELAY-ENABLED form.
 
 To let another agent dispatch execution to an arbitrary state (and resume with
 injected variables), the linear workflow has to be refactored: every state

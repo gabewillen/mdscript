@@ -1,4 +1,4 @@
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](../README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](../spec.md) -->
 
 ## Name Service
 
@@ -14,10 +14,10 @@
 ## Choose Language
 
 * ask the user for `{{language}}`:
-  * 1 — Go
-  * 2 — TypeScript
-  * 3 — Rust
-  * 4 — other
+  * 1) Go
+  * 2) TypeScript
+  * 3) Rust
+  * 4) other
 
 * if `{{language}}` is other
   * ask the user to specify a custom runtime
@@ -27,37 +27,37 @@
 ## Pick Stack
 
 * ask the user for `{{database}}`:
-  * 1 — PostgreSQL
-  * 2 — SQLite
-  * 3 — none
+  * 1) PostgreSQL
+  * 2) SQLite
+  * 3) none
 
 * ask the user for `{{messaging}}`:
-  * 1 — Kafka
-  * 2 — NATS
-  * 3 — none
+  * 1) Kafka
+  * 2) NATS
+  * 3) none
 
 * ask the user for `{{http_framework}}`:
-  * 1 — use a framework (ask which one)
-  * 2 — raw server
+  * 1) use a framework (ask which one)
+  * 2) raw server
 
 ## Configure Deployment
 
 * ask the user for `{{deploy_target}}`:
-  * 1 — Kubernetes
-  * 2 — Lambda
-  * 3 — Docker Compose
+  * 1) Kubernetes
+  * 2) Lambda
+  * 3) Docker Compose
 
 * if `{{deploy_target}}` is Kubernetes
   * ask if they need a `{{helm_chart}}`
-  * 1 — yes
-  * 2 — no
+  * 1) yes
+  * 2) no
 
 * if `{{deploy_target}}` is Lambda
   * ask for `{{memory_size}}` in MB
 
 * ask if the service exposes a `{{health_endpoint}}`
-  * 1 — yes
-  * 2 — no
+  * 1) yes
+  * 2) no
 
 ## Scaffold
 
@@ -75,11 +75,11 @@
   * add a message producer/consumer stub
 
 * ask the user if they want to initialize git
-  * 1 — yes; run `git init`
-  * 2 — no
+  * 1) yes; run `git init`
+  * 2) no
 
 ## Verify
 
 * ask the user if they want to run `{{service_name}}` locally now
-  * 1 — yes; start the service in development mode
-  * 2 — no; print the scaffold summary
+  * 1) yes; start the service in development mode
+  * 2) no; print the scaffold summary

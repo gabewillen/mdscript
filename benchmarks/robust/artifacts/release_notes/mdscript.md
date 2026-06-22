@@ -1,4 +1,4 @@
-<!-- Before executing, read the MDScript spec that defines how to run this file: [README.md](../../../../README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](../../../../spec.md) -->
 # Generate Release Notes
 
 Collect commits in a range, categorize them, and write CHANGELOG.md.

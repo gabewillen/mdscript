@@ -1,4 +1,4 @@
-<!-- mdscript: use the mdscript-exec skill or read [mdscript.md](../README.md) -->
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](../spec.md) -->
 
 ## Triage
 
@@ -6,9 +6,9 @@
   * ask for a description of the problem
 
 * classify severity `{{severity}}`:
-  * SEV1 — users are blocked or data is lost
-  * SEV2 — a feature is degraded
-  * SEV3 — cosmetic or minor issue
+  * SEV1: users are blocked or data is lost
+  * SEV2: a feature is degraded
+  * SEV3: cosmetic or minor issue
 
 * if `{{severity}}` is SEV1
   * page the on-call engineer
