@@ -101,6 +101,7 @@ npx skills add owner/repo --skill <name> -a cursor -g -y   # global, non-interac
 - Prose-only branching without anchor links
 - Declaring variables in a separate block
 - SKILL.md bodies over 500 lines without a `reference.md` split
+- Duplicating a shared step across workflows instead of linking one sub-script
 - Vague descriptions ("helps with workflows")
 - First-person descriptions ("I can help you…")
 

@@ -72,6 +72,20 @@ Before writing files, show the user a brief outline of proposed states and key
 variables when the design is non-trivial. Apply requested changes before
 writing.
 
+## Decompose Reusable Steps
+
+Extract a step into its own MDScript file and link to it when the step is reused
+by more than one workflow, is useful to run on its own, or is large enough to
+crowd the parent. Keep a step inline when it runs once and only here. A linked
+file is read and executed in place, so decomposition costs no extra syntax: the
+link is the call, and the same link stays click-navigable for a human browsing
+the repository.
+
+Aim for a few focused sub-scripts rather than one long file or a swarm of tiny
+ones. Give each sub-script durable headings so it can serve as an `mdscript-exec`
+entry point too, and let parents share a sub-script instead of duplicating its
+steps.
+
 ## Write The Skill Files
 
 Create the selected skill directory and write `SKILL.md` with valid YAML
@@ -110,6 +124,7 @@ Confirm the generated skill has:
 - `##` states that match the approved outline
 - durable heading names that can be used as `mdscript-exec` entry points
 - Markdown anchor links for branches and loops
+- reusable or shared steps extracted into linked sub-scripts rather than duplicated
 - actionable bullets that can be executed rather than narrated
 
 Tell the user the generated skill path, normal invocation form, heading-entry
