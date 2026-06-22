@@ -179,18 +179,57 @@ Developers can read and edit these workflows as normal Markdown. AI assistants e
 
 MDScript bridges human readability with machine executability by keeping structure minimal and relying on LLM language understanding for everything else.
 
-## Benchmark Results
+## Benchmarks
 
-The latest probabilistic scripting benchmark compared MDScript with Guidance, LMQL, and ell using OpenAI `gpt-5.5` for three blinded execution attempts per workflow and three independent judgments per execution across three workflow cases. It scores produced task outcomes: task success, requirements met, and failure recovery. See `benchmarks/llm-scripting/` for methodology, raw results, and analysis.
+MDScript is compared against idiomatic, hand-authored Guidance, LMQL, and ell
+artifacts on the same repository workflows. The benchmark lives in
+`benchmarks/robust/` and is built to *discriminate* rather than to flatter:
+scenarios force specific conditional branches, the primary metric is a
+deterministic checklist of observable behaviors (not a holistic LLM vibe score),
+the executor (`claude-haiku`) and judge (`claude-sonnet`, blind) are separate
+models, and MDScript executions are given the spec so the format is judged with
+its manual. See `benchmarks/robust/README.md` for the full methodology and
+honest limitations (execution is stochastic; only the grading is deterministic).
 
-<!-- latest LLM scripting benchmark summary from benchmarks/llm-scripting/results/latest.json -->
+> An earlier `benchmarks/llm-scripting/` run reported a 9.65–9.73 ranking. On
+> re-running it those differences proved to be inside the noise floor (all four
+> systems within ~0.1 of each other, sub-1-standard-error gaps, rank order not
+> reproducible). It is kept for history; the results below supersede it.
 
-| Rank | System | Overall | Task Success | Requirements Met | Failure Recovery | Std Dev | Judgments |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | MDScript | 9.73 | 9.89 | 9.67 | 9.33 | 0.35 | 27 |
-| 2 | Guidance | 9.67 | 9.81 | 9.59 | 9.37 | 0.36 | 27 |
-| 3 | ell | 9.65 | 9.78 | 9.63 | 9.30 | 0.37 | 27 |
-| 4 | LMQL | 9.65 | 9.81 | 9.56 | 9.30 | 0.39 | 27 |
+**Outcome correctness — deterministic checklist (primary), blind judge (secondary).**
+16 branch-forcing scenarios across three cases, two repeats each.
+
+| System | Checklist % | sd | Blind judge (1–10) |
+| --- | ---: | ---: | ---: |
+| MDScript | 100 | 0 | 9.00 |
+| LMQL (idiomatic) | 100 | 0 | 8.66 |
+| ell (idiomatic) | 96.1 | 15.9 | 8.06 |
+| Guidance (idiomatic) | 95.8 | 18.2 | 8.28 |
+
+MDScript reaches the ceiling on the deterministic metric with nothing but the
+README spec, and leads the blind judge — a format you can fully learn in 90
+seconds drove correct branch/loop/recovery behavior as reliably as the
+code-hosted DSLs.
+
+**Agent-to-agent delegation — the jump-point advantage (`benchmarks/robust/relay/`).**
+Every `##` heading is a stable entry point, so one agent can dispatch another to
+`workflow.md#heading` and resume a shared workflow mid-flow. A multi-hop relay
+(haiku workers dispatched to enter at each state with injected variables) shows:
+
+| System | Lines to become dispatchable | Handoff correctness | Readability with that plumbing |
+| --- | ---: | ---: | ---: |
+| MDScript | **+0** | 86% | **9.00** |
+| Guidance | +34 | 88% | 6.43 |
+| ell | +35 | 88% | 7.29 |
+| LMQL | +42 | 86% | 6.43 |
+
+Handoff correctness is a tie (zero jump failures across all formats) — MDScript
+does not *execute* a relay better. The difference is cost: MDScript is
+dispatchable-at-a-state for free because headings are already addressable, while
+the DSLs need ~34–42 lines of dispatch plumbing (roughly doubling the file),
+which also drops their readability by 1–1.5 points in a blind panel. The
+headings are simultaneously the docs, the control flow, and the inter-agent call
+interface.
 
 ## Install the MDScript skills
 
