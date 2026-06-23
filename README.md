@@ -156,6 +156,23 @@ npx skills add gabewillen/mdscript -a cursor -g -y
 
 Use `--skill mdscript-exec` or `--skill mdscript-write` only when you want to install one skill by itself.
 
+Invoke `mdscript-exec` with a workflow file, a start heading, or inline MDScript:
+
+```
+/mdscript-exec examples/deploy-branch.md
+/mdscript-exec examples/deploy-branch.md#run-checks
+/mdscript-exec examples/deploy-branch.md "Run Checks"
+```
+
+````markdown
+/mdscript-exec
+
+```markdown
+## Do Work
+* perform the requested workflow step
+```
+````
+
 Invoke `mdscript-write` with what you want the new skill to do:
 
 ```
@@ -167,7 +184,7 @@ Invoke `mdscript-write` with what you want the new skill to do:
 
 Installable skills:
 
-- `mdscript-exec` lives at `skills/mdscript-exec/` and executes MDScript workflows.
+- `mdscript-exec` lives at `skills/mdscript-exec/` and executes MDScript workflows from file paths, heading entry points, or inline strings.
 - `mdscript-write` lives at `skills/mdscript-write/` and authors MDScript-backed Agent Skills.
 
 To publish your own installable skills, place them under `skills/<name>/SKILL.md` in a GitHub repo so others can run `npx skills add <owner>/<repo>`.
