@@ -9,10 +9,9 @@ description: >-
 
 # MDScript Executor
 
-You ARE the executor: perform the workflow's actions yourself with your own
-tools, one action at a time. There is no separate mdscript-exec tool to call.
-Do not interpret this SKILL.md as MDScript; these are instructions for executing
-other Markdown workflow files or inline workflow strings that use MDScript syntax.
+Use this skill as the bootstrap executor for MDScript. Do not interpret this
+SKILL.md as MDScript; these are normal skill instructions for executing other
+Markdown workflow files or inline workflow strings that use MDScript syntax.
 
 ## Inputs
 

@@ -98,12 +98,15 @@ npx skills add owner/repo --skill <name> -a cursor -g -y   # global, non-interac
 ## Anti-patterns
 
 - Narrating instead of executing (saying "I would create the file" instead of creating it)
-- Prose-only branching without anchor links
+- Bundling several actions into one step instead of one discrete action per bullet
+- Prose-only branching without anchor links, or implied recovery paths never written as `[State](#anchor)` links
+- Inventing structure such as `## State:` heading prefixes or a `## variables` block instead of plain `## Heading` states with inline `{{variables}}`
 - Declaring variables in a separate block
+- Delegating the authoring to another tool or agent instead of writing the files yourself
 - SKILL.md bodies over 500 lines without a `reference.md` split
 - Duplicating a shared step across workflows instead of linking one sub-script
 - Vague descriptions ("helps with workflows")
-- First-person descriptions ("I can help you…")
+- First-person descriptions ("I can help you...")
 
 ## Repo examples
 

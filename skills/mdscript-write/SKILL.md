@@ -8,9 +8,22 @@ description: >-
 
 # MDScript Skill Writer
 
-Use this skill to author MDScript workflows and MDScript-backed Agent Skills. Do
-not interpret this SKILL.md as MDScript; these are normal authoring instructions
-for producing files that use MDScript syntax.
+You ARE the author: create the skill files yourself with your tools; do not
+delegate the authoring to another tool or agent. Use this skill to write MDScript
+workflows and MDScript-backed Agent Skills. Do not interpret this SKILL.md as
+MDScript; these are authoring instructions for producing files that use MDScript
+syntax.
+
+Author for the executor. Generated workflows are run by `mdscript-exec`, often on
+a small or local model executing one tool call per step. Two design choices
+decide whether that execution succeeds, so they are not optional:
+
+- Write each step as ONE discrete, tool-executable action (run, read, create,
+  edit, ask, confirm, deploy, verify, notify, roll back), never a paragraph that
+  bundles several actions or merely narrates intent.
+- Make every failure, retry, and recovery path an EXPLICIT `[State](#anchor)`
+  link. Executors reliably skip branches that are only implied in prose; an
+  unwritten recovery branch will not be run.
 
 ## Understand The Request
 
@@ -100,13 +113,32 @@ description: {{skill_description}}
 
 <!-- mdscript: use the mdscript-exec skill or read [spec.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/spec.md) -->
 
-## First State Title
+## Setup
 
 * if `{{input_variable}}` is empty
-  * infer `{{input_variable}}` from the input
+  * ask the user for `{{input_variable}}`
+* set `{{derived_value}}` to a value computed from `{{input_variable}}`
 
-* ...workflow instructions...
+## Run Checks
+
+* run `the validation command`
+  * if it fails, fix the issue and [Run Checks](#run-checks)
+
+## Apply Change
+
+* confirm with the user before the destructive step
+  * if declined, stop and report why
+* make the change
+* verify the result
+  * if verification fails, undo the change, notify the user, and
+    [Setup](#setup)
 ```
+
+Use clean `## Heading` states (the heading text IS the state name and the
+`mdscript-exec` entry point). Do not invent `## State:` prefixes, a `## variables`
+block, or any structure beyond headings, `{{variables}}`, and links. One concrete
+action per bullet. Every failure path ends in an explicit `[State](#anchor)` link
+or an explicit stop, never an implied "otherwise".
 
 Use the GitHub raw `spec.md` link in the execution header for publishable skills
 so the workflow still works when copied into another repo or personal skill folder.
@@ -121,11 +153,14 @@ Confirm the generated skill has:
 - valid YAML frontmatter with `name` and `description`
 - the MDScript execution header requiring `mdscript-exec` or reading the
   MDScript spec
+- clean `## Heading` states only, no `## State:` prefixes or a `## variables`
+  block or any invented syntax beyond headings, variables, and links
 - `##` states that match the approved outline
 - durable heading names that can be used as `mdscript-exec` entry points
-- Markdown anchor links for branches and loops
+- one discrete, tool-executable action per bullet, not bundled or narrated
+- every failure, retry, and recovery path written as an explicit
+  `[State](#anchor)` link (or an explicit stop), never only implied in prose
 - reusable or shared steps extracted into linked sub-scripts rather than duplicated
-- actionable bullets that can be executed rather than narrated
 
 Tell the user the generated skill path, normal invocation form, heading-entry
 form, and any supporting files created.

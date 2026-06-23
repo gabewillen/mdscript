@@ -13,7 +13,7 @@ choices rather than a real difference.
 | Score = LLM judge's holistic vibe on the executor's self-report | **Deterministic checklist (primary):** each scenario lists observable behaviors; a code grader checks the produced event trace. The judge is **secondary**. |
 | Executor self-report style leaked into the score ("logic exists" → credit) | Executor emits a **typed event log** and is told to emit events **only for actions actually performed in this run**. Untriggered branches earn nothing; the checklist credits behavior, not claims. |
 | Executor and judge were the same model family (self-grading) | **Separate models:** `claude-haiku` executes, `claude-sonnet` judges. |
-| MDScript was judged without its execution spec, unlike self-describing code | **MDScript executors read `README.md`** (honoring the `read` directive); the directive exists precisely to teach an agent how to run MDScript. Code artifacts need no external spec. |
+| MDScript was judged without its execution spec, unlike self-describing code | **MDScript executors read `spec.md`** (honoring the execution header); the spec exists precisely to teach an agent how to run MDScript. Code artifacts need no external spec. |
 | Judge could be swayed by framework reputation | **Blind judging:** the judge sees only the produced trace, never the artifact, the language, or the system name. |
 
 ## Layout
@@ -49,6 +49,24 @@ Systems: `mdscript`, `guidance` (idiomatic), `lmql` (idiomatic), `ell` (idiomati
 4. **Aggregate.** Per-system checklist % and judge mean, per-case breakdown, and
    **disagreements** (checklist passed but judge harsh, or vice versa), the
    places worth reading by hand.
+
+## Execution cost (time and tokens)
+
+The open-source executor path (`run_ollama.py`) records the real per-run cost
+ollama reports: input tokens (`prompt_eval_count`), output tokens (`eval_count`),
+and latency (`total_duration` minus the one-time `load_duration`). Every row in
+`results/ollama-*.json` carries a `cost` object and the summary prints per-system
+averages, so format-level cost differences are measured, not guessed. The summary
+also prices each run in dollars ($/1k runs), because output is ~5x input and raw
+token counts mislead. MDScript carries its execution aid (`spec.md`/`SKILL.md`)
+into every prompt, so its raw input is ~40 to 55% higher than the self-describing
+DSLs, but its output is the most concise; priced for real that gap nearly
+vanishes, and once the static aid is treated as a cacheable prefix (or amortized
+in a persistent agent session) MDScript is the cheapest of the four. See
+`results/ollama-cost-summary.md`. The Claude-haiku executor runs through the
+workflow runner, which does not expose per-call usage, so its absolute tokens and
+time are not recoverable from the existing run; the relative input-cost structure
+is a property of the prompt and holds for any executor.
 
 ## Honest limitations
 
