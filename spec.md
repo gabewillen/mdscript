@@ -125,4 +125,51 @@ Heading entry points make MDScript useful for cross-agent handoffs: one agent ca
 tell another to execute the same workflow from a precise state instead of
 replaying the whole script.
 
+## Return Scripts For Prompts
+
+When an executor prompts the user while inside an MDScript workflow, it must
+first write a return MDScript that carries the active workflow context forward.
+The return script should include:
+
+- the source workflow file or inline workflow summary
+- the `##` heading or anchor where execution should resume after the answer
+- the pending question and the variable or decision the answer should fill
+- all current `{{variables}}`, branch decisions, relevant files, and command
+  results needed to continue without replaying earlier states
+
+Prefer a stable workspace path such as
+`.mdscript/returns/<workflow>-<state>-<timestamp>.md` for return scripts. If the
+workflow came from an inline string, include the inline workflow body or enough
+of it to resume correctly. Avoid writing secrets into return scripts; summarize
+sensitive values instead.
+
+For tool-using executors, writing the return script is a separate action that
+must happen before the prompt action. If the executor has tools such as
+`write_file`, `ask_user`, or `request_confirmation`, call the file-writing tool
+first. The exact text passed to `ask_user` or `request_confirmation` must then
+include the resume command as its final line.
+
+The return script should be executable MDScript, for example:
+
+```markdown
+<!-- mdscript: use the mdscript-exec skill or read [spec.md](https://raw.githubusercontent.com/gabewillen/mdscript/main/spec.md) -->
+
+## Resume
+
+* restore saved variables and context from this return script
+* apply the user's latest answer to `{{branch}}`
+* continue by executing [Select Branch](../examples/deploy-branch.md#select-branch)
+```
+
+The user-facing prompt must end with the executable resume command for that
+return script, and no text after it:
+
+```text
+mdscript-exec .mdscript/returns/deploy-branch-select-branch-20260625T170000.md
+```
+
+When the user answers, the executor runs the return script, applies the user's
+answer to the pending variable or decision, restores the saved context, and
+continues the original workflow from the saved resume heading.
+
 For complete worked examples, see the `examples/` directory.

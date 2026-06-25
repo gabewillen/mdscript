@@ -73,6 +73,15 @@ be told to continue the workflow with `/mdscript-exec path/to/SKILL.md#heading`.
 Make headings durable, descriptive, and unique enough to be referenced from
 another thread or handoff.
 
+For any state that asks the user for input, confirmation, or a decision, make the
+resume target and answer binding obvious. `mdscript-exec` writes a return
+MDScript before prompting and ends the prompt with
+`mdscript-exec <return-script-path>`. The return script carries variables and
+context forward, usually resuming at the current state. Use an explicit
+`[State](#anchor)` link when the answer should resume somewhere else.
+Write prompt instructions so the requested variable or decision is explicit; the
+executor needs that name when it creates the return script.
+
 Include guard states where they reduce ambiguity or risk: missing input,
 confirm-before-destructive-action, validation failures, retry loops, and
 recovery branches.
@@ -157,6 +166,10 @@ Confirm the generated skill has:
   block or any invented syntax beyond headings, variables, and links
 - `##` states that match the approved outline
 - durable heading names that can be used as `mdscript-exec` entry points
+- prompt-heavy states name the variable or decision being requested clearly
+  enough for a return script to carry the answer forward; use an explicit
+  `[State](#anchor)` link when the answer should resume outside the current
+  state
 - one discrete, tool-executable action per bullet, not bundled or narrated
 - every failure, retry, and recovery path written as an explicit
   `[State](#anchor)` link (or an explicit stop), never only implied in prose

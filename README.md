@@ -31,7 +31,8 @@ other files. Everything else is plain natural-language instructions the LLM
 ```
 
 The full execution rules (variables, links, control flow, heading entry points,
-composition across files, and the "execute, don't narrate" contract) live in
+prompt return scripts, composition across files, and the "execute, don't
+narrate" contract) live in
 **[spec.md](spec.md)**. MDScript files point an executor at the spec with a header
 comment:
 
@@ -164,6 +165,14 @@ Invoke `mdscript-exec` with a workflow file, a start heading, or inline MDScript
 /mdscript-exec examples/deploy-branch.md "Run Checks"
 ```
 
+When a running workflow needs user input, `mdscript-exec` writes a return
+MDScript carrying the current variables and context, then ends the prompt with a
+resume command:
+
+```
+mdscript-exec .mdscript/returns/deploy-branch-select-branch-20260625T170000.md
+```
+
 ````markdown
 /mdscript-exec
 
@@ -184,7 +193,7 @@ Invoke `mdscript-write` with what you want the new skill to do:
 
 Installable skills:
 
-- `mdscript-exec` lives at `skills/mdscript-exec/` and executes MDScript workflows from file paths, heading entry points, or inline strings.
+- `mdscript-exec` lives at `skills/mdscript-exec/` and executes MDScript workflows from file paths, heading entry points, inline strings, or generated return scripts.
 - `mdscript-write` lives at `skills/mdscript-write/` and authors MDScript-backed Agent Skills.
 
 To publish your own installable skills, place them under `skills/<name>/SKILL.md` in a GitHub repo so others can run `npx skills add <owner>/<repo>`.

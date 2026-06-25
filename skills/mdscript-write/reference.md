@@ -44,6 +44,22 @@ Tell another agent to continue this workflow at a specific heading:
 `/mdscript-exec .agents/skills/deploy-staging/SKILL.md#verify-deployment`
 ```
 
+**Prompt return script**
+
+When `mdscript-exec` asks the user for input during execution, it first writes a
+return MDScript that carries variables, the pending question, and the resume
+heading. The prompt must end with the executable return command:
+
+```text
+mdscript-exec .mdscript/returns/setup-name-20260625T170000.md
+```
+
+Usually the return script resumes at the current state. If the answer should
+resume somewhere else, make that target explicit with a `[State](#anchor)` link.
+In tool-using environments, the executor writes the return script before calling
+the ask or confirmation tool, and includes the command as the last line of the
+question or confirmation text.
+
 **Infer from input**
 
 ```markdown
