@@ -182,7 +182,11 @@ mdscript-exec .mdscript/returns/deploy-branch-select-branch-20260625T170000.md
 ```
 ````
 
-Invoke `mdscript-write` with what you want the new skill to do:
+<!-- default output location from skills/mdscript-write/SKILL.md -->
+
+Invoke `mdscript-write` with what you want the new skill to do. Unless you give
+it another path explicitly, it writes the skill to
+`~/.agents/skills/<skill-name>/`:
 
 ```
 /mdscript-write deploy a branch to staging with health checks

@@ -44,16 +44,10 @@ three concrete names and ask the user to choose.
 
 ## Choose The Output Location
 
-Use an explicit location if the user provides one. Otherwise choose based on the
-workflow:
-
-- Use `skills/<skill_name>/` for a publishable repo skill.
-- Use `.cursor/skills/<skill_name>/` for a manual project-local skill.
-- Use `~/.cursor/skills/<skill_name>/` for a manual personal skill.
-
-Default to `skills/<skill_name>/` when the workflow is shareable or intended for
-installation through `npx skills add`. Default to project-local only when the
-workflow depends on repo-private paths, templates, or commands.
+Use an explicit location if the user provides one. Otherwise write the skill to
+`~/.agents/skills/<skill_name>/`. This is the only default; do not ask the user
+to choose personal or project scope, and do not select an agent-specific skills
+directory.
 
 ## Design The MDScript Workflow
 

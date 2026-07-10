@@ -94,21 +94,20 @@ question or confirmation text.
 * create the service using [Create Service](examples/create-service.md)
 ```
 
-## Cursor skill metadata
+## Agent Skill metadata
 
 | Field | Rules |
 |-------|-------|
 | `name` | Lowercase, hyphens, ≤64 chars; matches `/name` invocation |
 | `description` | Third person; WHAT + WHEN; ≤1024 chars; discovery keywords |
-| `disable-model-invocation` | `true` for explicit `/skill` commands (default for MDScript skills) |
 
 ## Publishing with the skills CLI
 
 Place installable skills at `skills/<name>/SKILL.md` in a GitHub repo, then:
 
 ```bash
-npx skills add owner/repo --skill <name> -a cursor
-npx skills add owner/repo --skill <name> -a cursor -g -y   # global, non-interactive
+npx skills add owner/repo --skill <name>
+npx skills add owner/repo --skill <name> -g
 ```
 
 ## Anti-patterns
