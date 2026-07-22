@@ -110,6 +110,16 @@ npx skills add owner/repo --skill <name>
 npx skills add owner/repo --skill <name> -g
 ```
 
+## Line budget
+
+Target fewer than 200 lines per MDScript. Split a file that approaches that
+budget into a few focused, directly linked MDScripts so the executor acquires
+context as it follows the workflow. Put examples, rationale, and background
+material in linked reference files. The 500-line limit is an exceptional hard
+ceiling, not an authoring target, and an `ALWAYS READ THE ENTIRE FILE` comment
+does not replace decomposition unless the selected executor explicitly defines
+that directive and the workflow truly depends on whole-file context.
+
 ## Anti-patterns
 
 - Narrating instead of executing (saying "I would create the file" instead of creating it)
@@ -118,7 +128,9 @@ npx skills add owner/repo --skill <name> -g
 - Inventing structure such as `## State:` heading prefixes or a `## variables` block instead of plain `## Heading` states with inline `{{variables}}`
 - Declaring variables in a separate block
 - Delegating the authoring to another tool or agent instead of writing the files yourself
-- SKILL.md bodies over 500 lines without a `reference.md` split
+- MDScripts approaching 200 lines without extracting focused linked states
+- Treating the 500-line hard ceiling as the normal authoring budget
+- Adding an `ALWAYS READ THE ENTIRE FILE` comment instead of decomposing a crowded workflow
 - Duplicating a shared step across workflows instead of linking one sub-script
 - Vague descriptions ("helps with workflows")
 - First-person descriptions ("I can help you...")

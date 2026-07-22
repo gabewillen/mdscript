@@ -80,9 +80,16 @@ Include guard states where they reduce ambiguity or risk: missing input,
 confirm-before-destructive-action, validation failures, retry loops, and
 recovery branches.
 
-Keep generated `SKILL.md` files under 500 lines. Move long examples or reference
-material to `reference.md` in the generated skill directory and link to it from
-the generated skill.
+Target fewer than 200 lines for every generated MDScript, including `SKILL.md`
+and linked sub-scripts. When a file approaches 200 lines, split focused states
+into linked MDScripts so the executor loads context naturally as it follows the
+workflow. Move examples, rationale, and reference material to linked reference
+files instead of spending the workflow's line budget on background prose.
+
+Treat 500 lines as an exceptional hard ceiling, not a normal target. Do not add
+an `ALWAYS READ THE ENTIRE FILE` comment as a substitute for decomposition; use
+such a directive only when the selected executor explicitly supports it and the
+workflow truly depends on whole-file context.
 
 Before writing files, show the user a brief outline of proposed states and key
 variables when the design is non-trivial. Apply requested changes before
@@ -97,10 +104,10 @@ file is read and executed in place, so decomposition costs no extra syntax: the
 link is the call, and the same link stays click-navigable for a human browsing
 the repository.
 
-Aim for a few focused sub-scripts rather than one long file or a swarm of tiny
-ones. Give each sub-script durable headings so it can serve as an `mdscript-exec`
-entry point too, and let parents share a sub-script instead of duplicating its
-steps.
+Aim for a few focused, sub-200-line scripts rather than one long file or a swarm
+of tiny ones. Give each sub-script durable headings so it can serve as an
+`mdscript-exec` entry point too, and let parents share a sub-script instead of
+duplicating its steps.
 
 ## Write The Skill Files
 
@@ -167,6 +174,8 @@ Confirm the generated skill has:
 - one discrete, tool-executable action per bullet, not bundled or narrated
 - every failure, retry, and recovery path written as an explicit
   `[State](#anchor)` link (or an explicit stop), never only implied in prose
+- every MDScript targets fewer than 200 lines, with crowded states extracted
+  into directly linked sub-scripts before relying on the 500-line hard ceiling
 - reusable or shared steps extracted into linked sub-scripts rather than duplicated
 
 Tell the user the generated skill path, normal invocation form, heading-entry
