@@ -142,7 +142,7 @@ and the call interface, for both agents and people.
 
 ## Install the MDScript skills
 
-The **mdscript-exec** skill executes MDScript workflows. The **mdscript-write** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. Install the repo with the [skills CLI](https://github.com/vercel-labs/skills) to get both skills:
+The **mdscript-exec** skill executes MDScript workflows. The **mdscript-write** skill helps you author new Agent Skills whose `SKILL.md` bodies are executable MDScript. The **mdscript-review** skill reviews MDScript for authoring and execution-contract violations with circuit breakers that stop remaining gates on P0 findings or a P1 threshold. Install the repo with the [skills CLI](https://github.com/vercel-labs/skills) to get the skills:
 
 ```bash
 # List available skills in this repo
@@ -155,7 +155,7 @@ npx skills add gabewillen/mdscript -a cursor -y
 npx skills add gabewillen/mdscript -a cursor -g -y
 ```
 
-Use `--skill mdscript-exec` or `--skill mdscript-write` only when you want to install one skill by itself.
+Use `--skill mdscript-exec`, `--skill mdscript-write`, or `--skill mdscript-review` only when you want to install one skill by itself.
 
 Invoke `mdscript-exec` with a workflow file, a start heading, or inline MDScript:
 
@@ -199,5 +199,14 @@ Installable skills:
 
 - `mdscript-exec` lives at `skills/mdscript-exec/` and executes MDScript workflows from file paths, heading entry points, inline strings, or generated return scripts.
 - `mdscript-write` lives at `skills/mdscript-write/` and authors MDScript-backed Agent Skills.
+- `mdscript-review` lives at `skills/mdscript-review/` and reviews MDScript with gate checks and circuit breakers for violations.
+
+Invoke `mdscript-review` with a path, skill directory, or single gate:
+
+```
+/mdscript-review examples/deploy-branch.md
+/mdscript-review skills/mdscript-write
+/mdscript-review path/to/workflow.md structure
+```
 
 To publish your own installable skills, place them under `skills/<name>/SKILL.md` in a GitHub repo so others can run `npx skills add <owner>/<repo>`.
