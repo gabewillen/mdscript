@@ -29,28 +29,11 @@ step. These three design rules are mandatory:
 
 ## Write In ASD-STE100
 
-Use these STE rules for each instruction, prompt, description, and sentence in
-the MDScript that you write:
-
-- Use only STE approved words with their approved meanings. Technical names and
-  technical verbs for computer processes (`run`, `commit`, `deploy`) are
-  permitted.
-- Use one word for one meaning. Use the same word for the same thing in all of
-  the workflow.
-- Write each instruction as a command. Use the active voice.
-- Put the condition before the action: "If X, do Y."
-- Write one instruction in each sentence.
-- Keep each instruction sentence to 20 words or fewer. Keep each descriptive
-  sentence to 25 words or fewer.
-- Use only the simple present, simple past, and future tenses. Do not use the
-  `-ing` form of a verb.
-- Do not use more than three nouns in a noun cluster.
-- Do not use contractions.
-
-The rules do not apply to `{{variables}}`, link targets, code spans, code
-blocks, file paths, commands, or YAML keys. Count each of these as one word. For
-the full rules and common word replacements, read
-[the STE section of reference.md](reference.md#write-in-asd-ste100).
+Write each instruction, prompt, description, and sentence of the MDScript in
+STE. Use only approved words, the command form, and the active voice. Put the
+condition first. Write one instruction in each sentence, with 20 words or fewer.
+Do not use `-ing` verb forms or contractions. Before you write, read
+[the STE rules in reference.md](reference.md#write-in-asd-ste100).
 
 ## Understand The Request
 
@@ -188,8 +171,8 @@ For a skill that you will publish, use the GitHub raw `spec.md` link in the
 execution header. Then the workflow continues to work if a user copies it into
 a different repository or skill folder.
 
-If the workflow uses templates, examples, or helper scripts, create them in the
-skill directory. Link to them from the MDScript body.
+Create templates, examples, and helper scripts in the skill directory. Link to
+them from the MDScript body.
 
 ## Examine The Output
 
@@ -198,19 +181,14 @@ Make sure that the skill has these items:
 - correct YAML frontmatter with `name` and an STE `description`
 - the MDScript execution header that tells the agent to use `mdscript-exec` or
   to read the MDScript spec
-- only clean `## Heading` states, with no `## State:` prefixes, no
-  `## variables` block, and no new syntax
+- only clean `## Heading` states, with no new syntax
 - `##` states that agree with the outline that the user approved
 - durable headings that are correct `mdscript-exec` entry points
-- prompt states that give the name of the variable or decision for the answer
-- an explicit `[State](#anchor)` link if an answer must continue outside the
-  current state
+- prompt states that give the variable or decision for the answer
 - one action that a tool can do in each bullet
 - an explicit `[State](#anchor)` link or stop for each failure, retry, and
   recovery path
-- fewer than 200 lines in each MDScript, with large states in linked
-  sub-scripts
-- shared steps in linked sub-scripts, not copied steps
+- fewer than 200 lines in each MDScript, and shared steps in linked sub-scripts
 - STE text in each instruction, prompt, and description
 
 Tell the user the path of the skill, the usual command to use it, the command
@@ -218,5 +196,4 @@ to start at a heading, and the supporting files that you created.
 
 ## Reference
 
-For MDScript syntax, control flow, STE rules, publication notes, and examples,
-read [reference.md](reference.md).
+For syntax, control flow, STE rules, and examples, read [reference.md](reference.md).
